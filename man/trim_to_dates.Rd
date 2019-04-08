@@ -4,7 +4,7 @@
 \alias{trim_to_dates}
 \title{trim_to_dates}
 \usage{
-trim_to_dates(data, start, end, uid, expand = T)
+trim_to_dates(data, start, end, expand = T)
 }
 \arguments{
 \item{data}{The data to subset}
@@ -12,8 +12,6 @@ trim_to_dates(data, start, end, uid, expand = T)
 \item{start}{the start time of desired data}
 
 \item{end}{the end time of desired data}
-
-\item{uid}{the unique id}
 
 \item{expand}{TRUE, want to go beyond start and end if values are the same}
 }

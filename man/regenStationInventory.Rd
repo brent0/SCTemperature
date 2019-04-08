@@ -7,5 +7,5 @@
 regenStationInventory()
 }
 \description{
-Update station inventory file that is used to help informt ranges using climate history
+Update station inventory file that is used to help inform ranges using climate history
 }

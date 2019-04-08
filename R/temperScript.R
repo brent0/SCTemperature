@@ -1,4 +1,5 @@
 
+
 con = NULL
 con2 = NULL
 con3 = NULL
@@ -12,16 +13,16 @@ GlobDep = NULL
 Sys.setenv(TZ = "America/Halifax")
 Sys.setenv(ORA_SDTZ = "America/Halifax")
 tz = "America/Halifax"
-meta.dir = file.path("C:", "Users", "cameronbj", "Desktop", "TemperatureData")
-raw.dir = file.path("C:", "Users", "cameronbj", "Desktop", "TemperatureData", "Amy", "Rawtempfiles")
+# meta.dir = file.path("C:", "Users", "cameronbj", "Desktop", "TemperatureData")
+# raw.dir = file.path("C:", "Users", "cameronbj", "Desktop", "TemperatureData", "Amy", "Rawtempfiles")
 
 #' @title regenStationInventory
-#' @description Update station inventory file that is used to help informt ranges using climate history
+#' @description Update station inventory file that is used to help inform ranges using climate history
 #' @export
 regenStationInventory  = function(){
- url <- paste0("ftp://client_climate@ftp.tor.ec.gc.ca/",
-                      "Pub/Get_More_Data_Plus_de_donnees/",
-                      "Station%20Inventory%20EN.csv")
+  url <- paste0("ftp://client_climate@ftp.tor.ec.gc.ca/",
+                "Pub/Get_More_Data_Plus_de_donnees/",
+                "Station%20Inventory%20EN.csv")
   SI <- readLines(url)
   write.csv(SI, file.path(meta.dir, "Station Inventory EN.csv"), row.names = F, quote = F)
 }
@@ -29,12 +30,13 @@ regenStationInventory  = function(){
 #' @title Populate
 #' @description  The prefered method of entry. Writes temperature data to oracle database from files that have formatted header information. See description file for header format information.
 #' @param fn The folder path that contains the temperature files to write
-#' @import ROracle lubridate
+#' @import ROracle lubridate DBI
 #' @return TRUE on success
 #' @export
 Populate = function(fn = NA) {
+  drv <- DBI::dbDriver("Oracle")
   if (is.na(fn)){
-   yr = as.character(lubridate::year(Sys.Date()))
+    yr = as.character(lubridate::year(Sys.Date()))
     fn = file.path("R:",
                    "Science",
                    "Population Ecology Division",
@@ -43,15 +45,16 @@ Populate = function(fn = NA) {
                    "TemperatureData",
                    paste("Entry ", yr, sep = ""))
   }
-  fl = list.files(fn, full.names = T)
+  fl = list.files(fn, full.names = T, recursive = F, include.dirs = FALSE)
+  fl = fl[which(!grepl("ReceiverPlots", fl))]
 
-  drv <- DBI::dbDriver("Oracle")
+
+  #### Get list of data already added to database ####
   con8 <<-
     ROracle::dbConnect(drv,
                        username = oracle.snowcrab.user,
                        password = oracle.snowcrab.password,
                        dbname = oracle.snowcrab.server)
-
 
   res <- ROracle::dbSendQuery(con8, "select DISTINCT FILE_S from SC_TEMPERATURE_META")
   res <- ROracle::fetch(res, n = -1)
@@ -61,187 +64,222 @@ Populate = function(fn = NA) {
   res2 <- ROracle::fetch(res2, n = -1)
   PID <- res2$PID
 
+
+  if (is.null(M_UID)) {
+    res <-
+      ROracle::dbSendQuery(con8, "select DISTINCT M_UID from SC_TEMPERATURE_META")
+    res <- ROracle::fetch(res, n = -1)
+    M_UID <<- res$M_UID
+
+  }
+
+  if (is.null(T_UID)) {
+    res2 <-
+      ROracle::dbSendQuery(con8, "select DISTINCT T_UID from SC_TEMPERATURE_BASE")
+    res2 <- ROracle::fetch(res2, n = -1)
+    T_UID <<- res2$T_UID
+
+  }
   ROracle::dbDisconnect(con8)
 
+  #####################################################
+  #Loop through all files in directory
   for (i in 1:length(fl)) {
+    #Only look at files that havent yet been added
     if (!fl[i] %in% FILE_S) {
+      print(fl[i])
+
       head = readLines(fl[i], n = 50)
 
       ind = grep("<SCHEADER>", head)
       ind2 = grep("</SCHEADER>", head)
-      head = head[ind:ind2]
-      head = paste0(head, collapse = " ")
-
-      DEPTH = NA
-      DEPTHUNITS = "meters"
-      LAT = NA
-      LON = NA
-      SDATE = NA
-      EDATE = NA
-      PORT = NA
-      LOCATION = NA
-      PROJECT = NA
-      NOTES = NA
-      USERID = NA
-      DTZ = tz
-
-
-      if (grepl("<LAT>",  head))
-        LAT = unlist(strsplit(trimws(
-          substr(
-            head,
-            regexpr("<LAT>", head)[1] + 5,
-            regexpr("</LAT>", head)[1] - 1
-          )
-        ), ","))
-      if (grepl("<LON>",  head))
-        LON = unlist(strsplit(trimws(
-          substr(
-            head,
-            regexpr("<LON>", head)[1] + 5,
-            regexpr("</LON>", head)[1] - 1
-          )
-        ), ","))
-      if (grepl("<STARTDATE>",  head))
-        SDATE = unlist(strsplit(trimws(
-          substr(
-            head,
-            regexpr("<STARTDATE>", head)[1] + 11,
-            regexpr("</STARTDATE>", head)[1] - 1
-          )
-        ), ","))
-      if (grepl("<ENDDATE>",  head))
-        EDATE = unlist(strsplit(trimws(
-          substr(
-            head,
-            regexpr("<ENDDATE>", head)[1] + 9,
-            regexpr("</ENDDATE>", head)[1] - 1
-          )
-        ), ","))
-      if (grepl("<DEPTH>",  head))
-        DEPTH = unlist(strsplit(trimws(
-          substr(
-            head,
-            regexpr("<DEPTH>", head)[1] + 7,
-            regexpr("</DEPTH>", head)[1] - 1
-          )
-        ), ","))
-      if (grepl("<DEPTHUNITS>",  head))
-        DEPTHUNITS = unlist(strsplit(trimws(
-          substr(
-            head,
-            regexpr("<DEPTHUNITS>", head)[1] + 12,
-            regexpr("</DEPTHUNITS>", head)[1] - 1
-          )
-        ), ","))
-
-      if(!is.na(DEPTH)){
-        if(tolower(DEPTHUNITS) == "fathoms" ) DEPTH = as.character(as.numeric(DEPTH)*1.8288)
-        if(tolower(DEPTHUNITS) == "feet" ) DEPTH = as.character(as.numeric(DEPTH)*.3048)
-      }
-
-      if (grepl("<TZ>",  head))
-        DTZ = unlist(strsplit(trimws(
-          substr(
-            head,
-            regexpr("<TZ>", head)[1] + 4,
-            regexpr("</TZ>", head)[1] - 1
-          )
-        ), ","))
-
-      if (length(LAT) == length(LON) &&
-          length(EDATE) == length(SDATE)) {
-        if (grepl("<PORT>",  head))
-          PORT = unlist(strsplit(trimws(
-            substr(
-              head,
-              regexpr("<PORT>", head)[1] + 6,
-              regexpr("</PORT>", head)[1] - 1
-            )
-          ), ","))
-        if (grepl("<LOCATION>",  head))
-          LOCATION = unlist(strsplit(trimws(
-            substr(
-              head,
-              regexpr("<LOCATION>", head)[1] + 10,
-              regexpr("</LOCATION>", head)[1] - 1
-            )
-          ), ","))
-        if (grepl("<PROJECT>",  head))
-          PROJECT = unlist(strsplit(trimws(
-            substr(
-              head,
-              regexpr("<PROJECT>", head)[1] + 9,
-              regexpr("</PROJECT>", head)[1] - 1
-            )
-          ), ","))
-        if (grepl("<NOTES>",  head))
-          NOTES = unlist(strsplit(trimws(
-            substr(
-              head,
-              regexpr("<NOTES>", head)[1] + 7,
-              regexpr("</NOTES>", head)[1] - 1
-            )
-          ), ","))
-
-        if (grepl("<USERID>",  head))
-          USERID = unlist(strsplit(trimws(
-            substr(
-              head,
-              regexpr("<USERID>", head)[1] + 8,
-              regexpr("</USERID>", head)[1] - 1
-            )
-          ), ","))
-
-        if (is.na(USERID))
-          USERID = "UNK"
-
-        xx = gsub(USERID, "", PID[grep(USERID, PID)])
-        if (length(xx) == 0) {
-          xx = "001"
+      #Check if file is standard modified SCTemp file with nessesary headers
+      if(length(ind) == 0){
+        #If not we will attempt to process based on known formats (so far receiver data)
+        manualmeta = read.csv(fl[i])
+        #Verify if we are dealing with receiver data
+        if(all(names(manualmeta) == c("station_name","date","receiver","description","data","units","rcv_serial_no","deploy_date","recover_date","recover_ind","dep_lat","dep_long","the_geom","catalognumber"))){
+          acoustic_file_handler(data = manualmeta, fl[i])
         }
         else{
-          xx = as.character(max(as.numeric(gsub(
-            USERID, "", PID[grep(USERID, PID)]
-          ))) + 1)
-          while (nchar(xx) < 3)
-            xx = paste("0", xx, sep = "")
+          print("Unknown format")
         }
-        xx = paste(USERID, xx, sep = "")
-        GlobLat <<- LAT
-        GlobLon <<- LON
-        GlobDep <<- DEPTH
 
-        for (j in 1:length(SDATE)) {
-          AddTempMetadata(
-            PID = xx,
-            UID = paste(xx, j, sep = "-"),
-            Project = PROJECT,
-            Location = LOCATION,
-            RecorderType = NA,
-            RecorderID = NA,
-            StartDate = dmy_hms(SDATE[j], tz = DTZ),
-            EndDate =  dmy_hms(EDATE[j], tz = DTZ),
-            RecordingRate = NA,
-            Port = PORT,
-            File = fl[i],
-            LAT.DD = LAT[j],
-            LON.DD = LON[j],
-            Observed_Depth = DEPTH[j],
-            UnitsforTemp = NA,
-            QAQC = NA,
-            Notes = NOTES,
-            HaulDate_Start =  dmy_hms(SDATE[j], tz = DTZ),
-            HaulDate_End =  dmy_hms(EDATE[j], tz = DTZ)
-          )
-
-        }
-        PID[length(PID) + 1] = xx
       }
       else{
-        print(paste(fl[i], " Has position AND OR date mismatch", sep = ""))
-      }
+        head = head[ind:ind2]
+        head = paste0(head, collapse = " ")
 
+        DEPTH = NA
+        DEPTHUNITS = "meters"
+        LAT = NA
+        LON = NA
+        SDATE = NA
+        EDATE = NA
+        PORT = NA
+        LOCATION = NA
+        PROJECT = NA
+        NOTES = NA
+        USERID = NA
+        DTZ = tz
+
+
+        if (grepl("<LAT>",  head))
+          LAT = unlist(strsplit(trimws(
+            substr(
+              head,
+              regexpr("<LAT>", head)[1] + 5,
+              regexpr("</LAT>", head)[1] - 1
+            )
+          ), ","))
+        if (grepl("<LON>",  head))
+          LON = unlist(strsplit(trimws(
+            substr(
+              head,
+              regexpr("<LON>", head)[1] + 5,
+              regexpr("</LON>", head)[1] - 1
+            )
+          ), ","))
+        if (grepl("<STARTDATE>",  head))
+          SDATE = unlist(strsplit(trimws(
+            substr(
+              head,
+              regexpr("<STARTDATE>", head)[1] + 11,
+              regexpr("</STARTDATE>", head)[1] - 1
+            )
+          ), ","))
+        if (grepl("<ENDDATE>",  head))
+          EDATE = unlist(strsplit(trimws(
+            substr(
+              head,
+              regexpr("<ENDDATE>", head)[1] + 9,
+              regexpr("</ENDDATE>", head)[1] - 1
+            )
+          ), ","))
+        if (grepl("<DEPTH>",  head))
+          DEPTH = unlist(strsplit(trimws(
+            substr(
+              head,
+              regexpr("<DEPTH>", head)[1] + 7,
+              regexpr("</DEPTH>", head)[1] - 1
+            )
+          ), ","))
+        if (grepl("<DEPTHUNITS>",  head))
+          DEPTHUNITS = unlist(strsplit(trimws(
+            substr(
+              head,
+              regexpr("<DEPTHUNITS>", head)[1] + 12,
+              regexpr("</DEPTHUNITS>", head)[1] - 1
+            )
+          ), ","))
+
+        if(!is.na(DEPTH)){
+          if(tolower(DEPTHUNITS) == "fathoms" ) DEPTH = as.character(as.numeric(DEPTH)*1.8288)
+          if(tolower(DEPTHUNITS) == "feet" ) DEPTH = as.character(as.numeric(DEPTH)*.3048)
+        }
+
+        if (grepl("<TZ>",  head))
+          DTZ = unlist(strsplit(trimws(
+            substr(
+              head,
+              regexpr("<TZ>", head)[1] + 4,
+              regexpr("</TZ>", head)[1] - 1
+            )
+          ), ","))
+
+        if (length(LAT) == length(LON) &&
+            length(EDATE) == length(SDATE)) {
+          if (grepl("<PORT>",  head))
+            PORT = unlist(strsplit(trimws(
+              substr(
+                head,
+                regexpr("<PORT>", head)[1] + 6,
+                regexpr("</PORT>", head)[1] - 1
+              )
+            ), ","))
+          if (grepl("<LOCATION>",  head))
+            LOCATION = unlist(strsplit(trimws(
+              substr(
+                head,
+                regexpr("<LOCATION>", head)[1] + 10,
+                regexpr("</LOCATION>", head)[1] - 1
+              )
+            ), ","))
+          if (grepl("<PROJECT>",  head))
+            PROJECT = unlist(strsplit(trimws(
+              substr(
+                head,
+                regexpr("<PROJECT>", head)[1] + 9,
+                regexpr("</PROJECT>", head)[1] - 1
+              )
+            ), ","))
+          if (grepl("<NOTES>",  head))
+            NOTES = unlist(strsplit(trimws(
+              substr(
+                head,
+                regexpr("<NOTES>", head)[1] + 7,
+                regexpr("</NOTES>", head)[1] - 1
+              )
+            ), ","))
+
+          if (grepl("<USERID>",  head))
+            USERID = unlist(strsplit(trimws(
+              substr(
+                head,
+                regexpr("<USERID>", head)[1] + 8,
+                regexpr("</USERID>", head)[1] - 1
+              )
+            ), ","))
+
+          if (is.na(USERID))
+            USERID = "UNK"
+
+          xx = gsub(USERID, "", PID[grep(USERID, PID)])
+          if (length(xx) == 0) {
+            xx = "001"
+          }
+          else{
+            xx = as.character(max(as.numeric(gsub(
+              USERID, "", PID[grep(USERID, PID)]
+            ))) + 1)
+            while (nchar(xx) < 3)
+              xx = paste("0", xx, sep = "")
+          }
+          xx = paste(USERID, xx, sep = "")
+          GlobLat <<- LAT
+          GlobLon <<- LON
+          GlobDep <<- DEPTH
+
+          for (j in 1:length(SDATE)) {
+            AddTempMetadata(
+              PID = xx,
+              UID = paste(xx, j, sep = "-"),
+              Project = PROJECT,
+              Location = LOCATION,
+              RecorderType = NA,
+              RecorderID = NA,
+              StartDate = dmy_hms(SDATE[j], tz = DTZ),
+              EndDate =  dmy_hms(EDATE[j], tz = DTZ),
+              RecordingRate = NA,
+              Port = PORT,
+              File = fl[i],
+              LAT.DD = LAT[j],
+              LON.DD = LON[j],
+              Observed_Depth = DEPTH[j],
+              UnitsforTemp = NA,
+              QAQC = NA,
+              Notes = NOTES,
+              HaulDate_Start =  dmy_hms(SDATE[j], tz = DTZ),
+              HaulDate_End =  dmy_hms(EDATE[j], tz = DTZ)
+            )
+
+          }
+          PID[length(PID) + 1] = xx
+        }
+        else{
+          print(paste(fl[i], " Has position AND OR date mismatch", sep = ""))
+        }
+      }
     }
     else{
       print(paste(fl[i], " Already exists in Database", sep = ""))
@@ -386,20 +424,7 @@ click.temp = function(da = NA, af = NA, uid = NA) {
 #' @return TRUE on success
 #' @export
 Populate_by_worksheet = function(fn) {
-  # if (redo) {
-  #   con <<-
-  #     ROracle::dbConnect(drv,
-  #                        username = oracle.snowcrab.user,
-  #                        password = oracle.snowcrab.password,
-  #                        dbname = oracle.snowcrab.server)
-  #
-  #   res <-
-  #     ROracle::dbSendQuery(con, "DELETE FROM SC_TEMPERATURE_META")
-  #   res <-
-  #     ROracle::dbSendQuery(con, "DELETE FROM SC_TEMPERATURE_BASE")
-  #   ROracle::dbDisconnect(con)
-  # }
-  #manualmeta = read.csv(file.path(meta.dir,  "ProjectInfoAmyrun.csv"))
+
   manualmeta = read.csv(fn)
   mmpid = split(manualmeta, manualmeta$ProjectID)
   for (i in 1:length(mmpid)) {
@@ -446,7 +471,7 @@ Populate_by_worksheet = function(fn) {
 
 #' @title  AddTempMetadata
 #' @description  Internal function. Writes metadata to database
-#' @import ROracle
+#' @import ROracle DBI
 #' @export
 AddTempMetadata = function(PID = NULL,
                            UID = NULL,
@@ -551,7 +576,6 @@ AddTempMetadata = function(PID = NULL,
   }
 
   if (!UID %in% M_UID) {
-    drv <- DBI::dbDriver("Oracle")
     con3 <<-
       ROracle::dbConnect(drv,
                          username = oracle.snowcrab.user,
@@ -574,7 +598,7 @@ AddTempMetadata = function(PID = NULL,
 }
 #' @title  AddTempRawdata
 #' @description  Internal function. Writes rawdata to database
-#' @import ROracle
+#' @import ROracle DBI
 #' @export
 AddTempRawdata = function(fn = NULL,
                           UID = NULL,
@@ -585,7 +609,7 @@ AddTempRawdata = function(fn = NULL,
                           HaulDate_End = NULL,
                           metadx = NULL) {
   print("Add Raw Data")
-  drv <- DBI::dbDriver("Oracle")
+
   con4 <<-
     ROracle::dbConnect(drv,
                        username = oracle.snowcrab.user,
@@ -673,7 +697,7 @@ AddTempRawdata = function(fn = NULL,
       if(is.na(HaulDate_End)) HaulDate_End = NULL
       if (!is.null(HaulDate_End)) {
 
-        madat = trim_to_dates(sta_cont$data, HaulDate_Start,	HaulDate_End, UID, TRUE)
+        madat = trim_to_dates(sta_cont$data, HaulDate_Start,	HaulDate_End, TRUE)
         if (nrow(madat) == 0) {
           madat = auto_filter(
             da = sta_cont$data,
@@ -702,11 +726,11 @@ AddTempRawdata = function(fn = NULL,
       dx = sta_cont$data
       rx = click.temp(dx, madat, UID)
       sta_cont$QAQC = paste(sta_cont$QAQC, "Plot_Clicked_Filtered", sep = " ")
-      dx = trim_to_dates(dx, rx$start,	rx$end, UID, FALSE)
+      dx = trim_to_dates(dx, rx$start,	rx$end, FALSE)
       sta_cont$deployments = nrow(rx)
 
-
       drv <- DBI::dbDriver("Oracle")
+
       con5 <<-
         ROracle::dbConnect(drv,
                            username = oracle.snowcrab.user,
@@ -867,8 +891,8 @@ standardize.temp = function(fn, uid = NULL, lat = NULL, lon = NULL, subset = NUL
       header = header[-(grep("<SCHEADER>", header):grep("</SCHEADER>", header))]
     }
     header = gsub("\t", "", header)
-    header = gsub("\\?C", "?C", header)
-    header = gsub("\\?F", "?F", header)
+    header = gsub("\\?C", "°C", header)
+    header = gsub("\\?F", "°F", header)
     header = gsub(",,", "", header)
 
     if (any(grepl("* ", header, fixed = T)))
@@ -929,9 +953,9 @@ standardize.temp = function(fn, uid = NULL, lat = NULL, lon = NULL, subset = NUL
 
     ret$UnitsforTemp = "Unknown"
     ##If fahrenheit we should convert
-    if (any(grepl("?C", header, ignore.case = TRUE)))
+    if (any(grepl("°C", header, ignore.case = TRUE)))
       ret$UnitsforTemp = "Celsius"
-    if (any(grepl("?F", header, ignore.case = TRUE)))
+    if (any(grepl("°F", header, ignore.case = TRUE)))
       ret$UnitsforTemp = "Fahrenheit"
 
     #NOT Expected to return data, but will try anyway
@@ -1116,11 +1140,11 @@ standardize.temp = function(fn, uid = NULL, lat = NULL, lon = NULL, subset = NUL
       data =  read.delim(fn)
     ret$UnitsforTemp = "Unknown"
     ##If fahrenheit we should convert
-    if (any(grepl("?C", header, ignore.case = TRUE)))
+    if (any(grepl("°C", header, ignore.case = TRUE)))
       ret$UnitsforTemp = "Celsius"
     if (any(grepl(" C", header, ignore.case = TRUE)))
       ret$UnitsforTemp = "Celsius"
-    if (any(grepl("?F", header, ignore.case = TRUE)))
+    if (any(grepl("°F", header, ignore.case = TRUE)))
       ret$UnitsforTemp = "Fahrenheit"
     T_DATE = "NA"
     datecolumn = grep("date", names(data), ignore.case = T)
@@ -1189,18 +1213,210 @@ standardize.temp = function(fn, uid = NULL, lat = NULL, lon = NULL, subset = NUL
   ret$data$LON_DD = abs(ret$data$LON_DD) * -1
   return(ret)
 }
+#' @title acoustic_file_handler
+#' @description  Internal function. Acoustic data is structured in opposition to project structure so this seperate handler was created to process and write data to the oracle tables
+#' @param fn The data to process
+#' @param fn The place to write the plot
+#' @import lubridate ggplot2 scales
+#' @return True or False
+#' @export
+acoustic_file_handler = function(data, fn){
+
+
+  mmpid = split(data, data$station_name)
+  for (k in 1:length(mmpid)) {
+
+    mm_sub = mmpid[[k]]
+    print(as.character(mm_sub$station_name[1]))
+    #loop through each deployment
+    mdpid = split(mm_sub, as.character(mm_sub$deploy_date))
+    for (j in 1:length(mdpid)) {
+      md_sub = mdpid[[j]]
+
+      #Remove min and max entries and duplicates
+      ind = which(as.character(md_sub$description) == "Temperature" | as.character(md_sub$description) == "Average temperature" | as.character(md_sub$description) == "ambient_mean_deg_c")
+      md_sub = md_sub[ind,]
+      md_sub = md_sub[!duplicated(paste(md_sub$date, md_sub$receiver, sep = "-")),]
+
+      if(length(ind) == 0){
+        print("No 'Temperatrue', 'ambient_mean_deg_c' or 'Average temperature' feilds")
+        next()
+      }
+
+
+      #Order by date
+      md_sub$sdate = dmy(as.character(md_sub$date), tz = "UTC")
+
+      if(any(is.na(md_sub$sdate))){
+        md_sub$sdate = ymd(as.character(md_sub$date), tz = "UTC")
+      }
+      md_sub = md_sub[order(md_sub$sdate),]
+
+      muid = paste(as.character(md_sub$station_name[1]), as.character(length(which(grepl(as.character(md_sub$station_name[1]), T_UID))) +1), sep = "-")
+      loc = NA
+      pro = NA
+      if(grepl("CBS", as.character(md_sub$station_name[1]))){
+        loc = "Cabot Strait"
+        pro = "OTN Cabot Strait"
+      }
+      if(grepl("HFX", as.character(md_sub$station_name[1]))){
+        loc = "South of Halifax"
+        pro = "OTN Halifax"
+      }
+      if(grepl("V2LSCF", as.character(md_sub$catalognumber[1]))){
+        loc = "SABMPA"
+        pro = "V2LSCF"
+      }
+      span = interval(md_sub$sdate[1], md_sub$sdate[2])
+
+      rate = as.character(as.period(span, unit = "hours"))
+
+      rate = unlist(strsplit(rate, " "))
+      rate = gsub("[^0-9.-]", "", rate)
+      rate = paste(rate[1], rate[2], rate[3], sep = ":")
+      units = NA
+      if(any(grepl("°F", md_sub$units))){
+        md_sub$data = ((as.numeric(as.character(md_sub$data)) - 32) * 5) / 9
+        units = "Celsius"
+
+      }
+      if(any(grepl("°C", md_sub$units))) units = "Celsius"
+      ##..Add others here##
+
+      hauldate = dmy_hm(as.character(md_sub$recover_date[1]), tz = "UTC")
+      if(any(is.na(hauldate))){
+        hauldate = ymd_hms(as.character(md_sub$recover_date[1]), tz = "UTC")
+      }
+      setdate = dmy_hm(as.character(md_sub$deploy_date[1]), tz = "UTC")
+      if(any(is.na(setdate))){
+        setdate = ymd_hms(as.character(md_sub$deploy_date[1]), tz = "UTC")
+      }
+      #handle the case where not haul date provided
+      if(!any(as.character(md_sub$recover_date) != "")){
+        hauldate = max(md_sub$sdate)
+      }
+
+      dx = data.frame(
+        muid,
+        as.character(md_sub$station_name[1]),
+        pro,
+        loc,
+        unlist(strsplit(as.character(md_sub$receiver[1]), "-"))[1],
+        as.character(md_sub$rcv_serial_no[1]),
+        setdate,
+        hauldate,
+        rate,
+        NA,
+        fn,
+        md_sub$dep_lat[1],
+        md_sub$dep_long[1],
+        NA,
+        units,
+        "Temp_Only One_Day_Buffer_Exclusion",
+        NA,
+        setdate + days(1),
+        hauldate - days(1),
+        stringsAsFactors = F
+      )
+      names(dx) = c(
+        "M_UID",
+        "PID",
+        "PROJECT",
+        "LOCATION",
+        "RECORDER_TYPE",
+        "RECORDER_ID",
+        "START_DATE",
+        "END_DATE",
+        "RECORDING_RATE",
+        "PORT",
+        "FILE_S",
+        "M_LAT_DD",
+        "M_LON_DD",
+        "OBSERVED_DEPTH_METERS",
+        "UNITS_FOR_TEMP",
+        "QAQC",
+        "NOTES",
+        "HAUL_DATE_START",
+        "HAUL_DATE_END"
+      )
+      muiddx = rep(muid, nrow(md_sub))
+
+
+      basedat = data.frame(muiddx, md_sub$sdate, md_sub$dep_lat, md_sub$dep_long, md_sub$data, stringsAsFactors =  F)
+      names(basedat) = c("T_UID", "T_DATE", "LAT_DD", "LON_DD", "TEMP")
+
+      if(dx$HAUL_DATE_END > dx$HAUL_DATE_START){
+        basedat = trim_to_dates(basedat, dx$HAUL_DATE_START, dx$HAUL_DATE_END, FALSE)
+      }
+      else{
+        print("Not Enough DATA")
+        next()
+      }
+      if(nrow(basedat)<1){
+        print("Not Enough DATA")
+        next()
+
+      }
+
+      if (!muid %in% M_UID) {
+        con3 <<-
+          ROracle::dbConnect(drv,
+                             username = oracle.snowcrab.user,
+                             password = oracle.snowcrab.password,
+                             dbname = oracle.snowcrab.server)
+
+        ROracle::dbWriteTable(
+          con3,
+          name = "SC_TEMPERATURE_META",
+          append = T,
+          row.names = F,
+          value = dx
+        )
+        M_UID <<- c(M_UID, muid)
+        ROracle::dbDisconnect(con3)
+      }
+
+      if (!muid %in% T_UID) {
+        con5 <<-
+          ROracle::dbConnect(drv,
+                             username = oracle.snowcrab.user,
+                             password = oracle.snowcrab.password,
+                             dbname = oracle.snowcrab.server)
+
+
+        ROracle::dbWriteTable(
+          con5,
+          name = "SC_TEMPERATURE_BASE",
+          append = T,
+          row.names = F,
+          value = basedat
+        )
+        alluid = paste0(unique(basedat$T_UID))
+        T_UID <<- c(T_UID, alluid)
+        ROracle::dbDisconnect(con5)
+      }
+
+      p = ggplot(data = basedat, main = muid, aes(x = T_DATE, y = TEMP)) + geom_line() + ggtitle(muid) + xlab("Date") + ylab("Temp °C")
+      p = p + scale_x_datetime(labels = date_format("%Y-%m"), breaks = date_breaks("months")) + theme(axis.text.x = element_text(angle = 45))
+      if(!dir.exists( file.path(dirname(fn), "ReceiverPlots"))) dir.create(file.path(dirname(fn), "ReceiverPlots"))
+      ggsave(p, width = 10, height = 10, filename = file.path(dirname(fn), "ReceiverPlots", paste(muid, ".pdf", sep = "")))
+
+
+    }
+  }
+}
+
 
 #' @title trim_to_dates
 #' @description  Internal function. Simply trim data to specified dates
 #' @param data The data to subset
 #' @param start the start time of desired data
 #' @param end the end time of desired data
-#' @param uid the unique id
 #' @param expand TRUE, want to go beyond start and end if values are the same
 #' @import lubridate
 #' @return dataframe of new trimed data
 #' @export
-trim_to_dates = function(data, start,	end, uid, expand = T) {
+trim_to_dates = function(data, start,	end, expand = T) {
   dat = NULL
   if (start == end) {
     if(expand)end = end + hours(24)
@@ -1215,23 +1431,14 @@ trim_to_dates = function(data, start,	end, uid, expand = T) {
 
   return(dat)
 }
-# trim_to_bottom = function(data) {
-#   dat = NULL
-#
-#   for (i in 1:length(start)) {
-#     dat = rbind(dat, data[which(data$T_DATE >= start[i] &
-#                                   data$T_DATE <= end[i]), ])
-#   }
-#
-#   return(dat)
-# }
+
 #' @title auto_filter
 #' @description  Internal function. Suggests better bottom times based on various inputs
 #' @param da The data to inform
 #' @param lat the latitude needed to get closest station temperatures
 #' @param lon the longitude needed to get closest station temperatures
 #' @param uid the unique id
-#' @import lubridate geosphere forecast
+#' @import lubridate
 #' @return dataframe of best guess of down range from da
 #' @export
 auto_filter = function(da = NA, lat = NA, lon = NA, uid = NA) {
@@ -1284,7 +1491,7 @@ auto_filter = function(da = NA, lat = NA, lon = NA, uid = NA) {
 
   da$airTemp = NA
   for (i in 1:nrow(da)) {
-    da$airTemp[i] = alldx$Temp..?.C.[which(min(abs(da$T_DATE[i] - alldx$Date)) == abs(da$T_DATE[i] - alldx$Date))]
+    da$airTemp[i] = alldx$'Temp..Â.C.'[which(min(abs(da$T_DATE[i] - alldx$Date)) == abs(da$T_DATE[i] - alldx$Date))]
   }
 
   da$difatwat = da$TEMP - da$airTemp
