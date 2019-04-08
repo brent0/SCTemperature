@@ -317,12 +317,7 @@ click.temp = function(da = NA, af = NA, uid = NA) {
   active = T
   while (active) {
     x11(25, 15)
-
-
-    #Define Margins for multiple y-axis
     par(mar = c(5, 8, 4, 4) + 0.1)
-
-
     plot(
       da$T_DATE,
       da$TEMP,
@@ -334,7 +329,7 @@ click.temp = function(da = NA, af = NA, uid = NA) {
       main = uid,
       lwd = 1
     )
-    # axis(1, at=da$T_DATE, labels = format(da$T_DATE, format="%m %Y"))
+
     axis.POSIXct(1, at = seq(da$T_DATE[1], da$T_DATE[length(da$T_DATE)], by = "month"))
     axis(2)
     #Plot the filter
@@ -362,10 +357,7 @@ click.temp = function(da = NA, af = NA, uid = NA) {
     end = da$T_DATE[id2$ind]
     points(xval[id2$ind], yval[id2$ind], col = "darkgreen", pch = 19)
 
-
-
     #   userinp <- readline("Are you happy with these values? (Y or N)"  )
-
 
     res <- tkmessageBox(
       title = "ManualTD",
@@ -411,7 +403,6 @@ click.temp = function(da = NA, af = NA, uid = NA) {
     }
   }
 
-  #Store results
 
   return(result)
 }
@@ -820,8 +811,6 @@ AddTempRawdata = function(fn = NULL,
           rnotes = trimws(paste(rnotes, metadx$NOTES, sep = " "))
         if (!is.na(sta_cont$Notes))
           rnotes = trimws(paste(rnotes, sta_cont$Notes, sep = " "))
-
-
 
         AddTempMetadata(
           PID = sta_cont$PID,
@@ -1622,17 +1611,13 @@ auto_filter = function(da = NA, lat = NA, lon = NA, uid = NA) {
   da$tid[which(da$pretidal >= 8 & da$pretidal <= 16)] = T
 
   da$diftemp = abs(da$TEMP - da$airTemp)
-  # da$confidence[which(da$diftemp <= 2)] = da$confidence[which(da$diftemp <= 2)] + 1
-  # da$confidence[which(da$diftemp <= 3)] = da$confidence[which(da$diftemp <= 3)] + 1
-  # da$confidence[which(da$diftemp <= 5)] = da$confidence[which(da$diftemp <= 5)] + 1
-  # da$confidence[which(da$diftemp <= 10)] = da$confidence[which(da$diftemp <= 10)] + 1
+
   da$confidence[which(da$TEMP > 18)] = da$confidence[which(da$TEMP > 18)] + 1
   da$confidence[which(da$TEMP > 20)] = da$confidence[which(da$TEMP > 20)] + 2
   da$confidence[which(da$TEMP > 22)] = da$confidence[which(da$TEMP > 22)] + 5
   da$confidence[which(da$TEMP > 24)] = da$confidence[which(da$TEMP > 24)] + 100
   da$confidence[which(da$TEMP > 26)] = da$confidence[which(da$TEMP > 26)] + 100
-  #da$confidence = da$confidence + (da$var/max(da$var) * 10)
-  #da$confidence = da$confidence + da$dailyflut
+
   da$confidence = da$confidence - (da$avar * 10)
   da$atmosv = 0
   da$atmosv[which(da$atmos == T)] = 10
@@ -1654,8 +1639,6 @@ auto_filter = function(da = NA, lat = NA, lon = NA, uid = NA) {
 
 
   #png(file = file.path(meta.dir,"plots", paste(uid, ".png", sep = "")))
-
-
   #plot(da$T_DATE, da$TEMP, col = "blue", type = "l")
   #lines(da$T_DATE, da$airTemp, col = "red")
 
