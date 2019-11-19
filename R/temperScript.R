@@ -8,20 +8,80 @@ assign('GlobLat', NULL, pkg.env)
 assign('GlobLon', NULL, pkg.env)
 assign('GlobDep', NULL, pkg.env)
 assign('tz', "America/Halifax", pkg.env)
-#T_UID = NULL
-#M_UID = NULL
-#GlobLat = NULL
-#GlobLon = NULL
-#GlobDep = NULL
+assign('metafile', system.file("extdata", "Station Inventory EN.csv", package = "SCTemperature"), pkg.env)
+assign('shpfile', system.file("extdata", "801-bord_l.shp", package = "SCTemperature"), pkg.env)
 
-#tz = "America/Halifax"
-# meta.dir = file.path("C:", "Users", "cameronbj", "Desktop", "TemperatureData")
-# raw.dir = file.path("C:", "Users", "cameronbj", "Desktop", "TemperatureData", "Amy", "Rawtempfiles")
+
+
+# Function to plot color bar
+color.bar <- function(lut, min, max=-min, nticks=11, ticks=seq(min, max, len=nticks), title='') {
+  scale = (length(lut)-1)/(max-min)
+  plot(c(0,10), c(min,max), type='n', bty='n', xaxt='n', xlab='', yaxt='n', ylab='', main=title)
+  axis(2, ticks, las=1)
+  for (i in 1:(length(lut)-1)) {
+    y = (i-1)/scale + min
+    rect(0,y,10,y+1/scale, col=lut[i], border=NA)
+  }
+}
+
+
+#' @title plot_sc_temp_merge
+#' @description Create maps for quick visualizaton of aggregrated bottom temperature
+#' @import ROracle lubridate DBI PBSmapping
+#' @export
+plot_sc_temp_merge <- function(){
+
+
+    drv <- DBI::dbDriver("Oracle")
+
+ con8 <<-
+    ROracle::dbConnect(drv,
+                       username = oracle.snowcrab.user,
+                       password = oracle.snowcrab.password,
+                       dbname = oracle.snowcrab.server)
+  res <- ROracle::dbSendQuery(con8, "ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD'")
+  res <- ROracle::dbSendQuery(con8, "ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH24:MI:SSXFF'")
+  res <- ROracle::dbSendQuery(con8, "ALTER SESSION SET  NLS_TIMESTAMP_TZ_FORMAT = 'YYYY-MM-DD HH24:MI:SSXFF TZR'")
+  res <- ROracle::dbReadTable(con8, "SC_TEMP_AGG")
+  res$latitude = matrix(unlist(strsplit(res$POS, ",")), ncol = 2, byrow = T)[,1]
+  res$longitude = matrix(unlist(strsplit(res$POS, ",")), ncol = 2, byrow = T)[,2]
+  mint = floor(min(res$TEMP))
+  maxt = ceiling(max(res$TEMP))
+  ii <- cut(res$TEMP, breaks = seq(mint, maxt, len = 100),
+            include.lowest = TRUE)
+  res$col <- colorRampPalette(c("blue","green","yellow","red"))(99)[ii]
+
+  legv = seq(mint, maxt, len = 10)
+  legc = colorRampPalette(c("blue","green","yellow","red"))(10)
+  da = split(res, res$WEEKSPAN)
+  for(i in 1:length(da)){
+    das = da[[i]]
+    das$PID = 1:nrow(das)
+    das$X = as.numeric(das$longitude)
+    das$Y = as.numeric(das$latitude)
+    print(system.file("extdata", "801-bord_l.shp", package = "SCTemperature"))
+
+    print(system.file("extdata", "801-bord_l.shp", package = "SCTemperature"))
+    png(file = file.path("C:","bio.data", "bio.snowcrab","maps", "temp_merge_plots", paste(das$WEEKSPAN[1], ".png", sep = "")), width = 800, height = 600)
+
+    shpps = importShapefile(pkg.env$shpfile)
+    plotLines(shpps, xlim = c(-70,-55), ylim = c(41.5,49), main = das$WEEKSPAN[1], col = "snow1", cex = .5)
+
+    dx = as.PolyData(das, projection = NULL, zone = NULL)
+
+    addPoints(dx, col = dx$col, pch = 20, main = das$WEEKSPAN[1])
+    legend("topright", legend = round(legv,1), col = legc, pch = 20, cex = 2)
+    dev.off()
+  }
+}
+
 
 #' @title regenStationInventory
 #' @description Update station inventory file that is used to help inform ranges using climate history
 #' @export
 regenStationInventory  = function() {
+
+
   url <- paste0(
     "ftp://client_climate@ftp.tor.ec.gc.ca/",
     "Pub/Get_More_Data_Plus_de_donnees/",
@@ -30,7 +90,7 @@ regenStationInventory  = function() {
   SI <- readLines(url)
   write.csv(
     SI,
-    file.path(meta.dir, "Station Inventory EN.csv"),
+    pkg.env$metafile,
     row.names = F,
     quote = F
   )
@@ -43,6 +103,7 @@ regenStationInventory  = function() {
 #' @return TRUE on success
 #' @export
 Populate = function(fn = NA) {
+
   Sys.setenv(TZ = "America/Halifax")
   Sys.setenv(ORA_SDTZ = "America/Halifax")
   drv <- DBI::dbDriver("Oracle")
@@ -342,6 +403,7 @@ Populate = function(fn = NA) {
 click.temp = function(da = NA,
                       af = NA,
                       uid = NA) {
+
   #Set up plot range
   if ((nrow(af) / nrow(da)) < .05) {
     sdate = af$T_DATE[1] - days(5)
@@ -460,6 +522,8 @@ click.temp = function(da = NA,
 #' @return TRUE on success
 #' @export
 Populate_by_worksheet = function(fn) {
+
+
   Sys.setenv(TZ = "America/Halifax")
   Sys.setenv(ORA_SDTZ = "America/Halifax")
   manualmeta = read.csv(fn)
@@ -528,6 +592,7 @@ AddTempMetadata = function(PID = NULL,
                            Notes = NA,
                            HaulDate_Start = NA,
                            HaulDate_End = NA) {
+
   Sys.setenv(TZ = "America/Halifax")
   Sys.setenv(ORA_SDTZ = "America/Halifax")
   drv = DBI::dbDriver("Oracle")
@@ -647,6 +712,7 @@ AddTempRawdata = function(fn = NULL,
                           HaulDate_Start = NULL,
                           HaulDate_End = NULL,
                           metadx = NULL) {
+
   Sys.setenv(TZ = "America/Halifax")
   Sys.setenv(ORA_SDTZ = "America/Halifax")
   print("Add Raw Data")
@@ -905,6 +971,7 @@ standardize.temp = function(fn,
                             lat = NULL,
                             lon = NULL,
                             subset = NULL) {
+
   ret = NULL
 
   ret$RecordingRate = NA
@@ -1263,6 +1330,7 @@ standardize.temp = function(fn,
 #' @return True or False
 #' @export
 acoustic_file_handler = function(data, fn) {
+
   mmpid = split(data, data$station_name)
   for (k in 1:length(mmpid)) {
     mm_sub = mmpid[[k]]
@@ -1523,7 +1591,11 @@ auto_filter = function(da = NA,
                        lat = NA,
                        lon = NA,
                        uid = NA) {
-  hw = read.csv(file.path(meta.dir, "weather_gc_station_inventory.csv"))
+
+  assign('metafile', system.file("extdata", "Station Inventory EN.csv", package = "SCTemperature"), pkg.env)
+
+  #hw = read.csv(file.path(meta.dir, "weather_gc_station_inventory.csv"))
+  hw = read.csv(pkg.env$metafile)
   hw = hw[which(!is.na(hw$HLY.First.Year)),]
 
   hw = hw[which(hw$HLY.First.Year < year(da$T_DATE[1])),]
