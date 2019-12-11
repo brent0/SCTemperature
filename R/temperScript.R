@@ -8,8 +8,6 @@ assign('GlobLat', NULL, pkg.env)
 assign('GlobLon', NULL, pkg.env)
 assign('GlobDep', NULL, pkg.env)
 assign('tz', "America/Halifax", pkg.env)
-assign('metafile', system.file("extdata", "Station Inventory EN.csv", package = "SCTemperature"), pkg.env)
-assign('shpfile', system.file("extdata", "801-bord_l.shp", package = "SCTemperature"), pkg.env)
 
 
 
@@ -31,6 +29,7 @@ color.bar <- function(lut, min, max=-min, nticks=11, ticks=seq(min, max, len=nti
 #' @export
 plot_sc_temp_merge <- function(){
 
+   assign('shpfile', system.file("extdata", "801-bord_l.shp", package = "SCTemperature"), pkg.env)
 
     drv <- DBI::dbDriver("Oracle")
 
@@ -59,9 +58,6 @@ plot_sc_temp_merge <- function(){
     das$PID = 1:nrow(das)
     das$X = as.numeric(das$longitude)
     das$Y = as.numeric(das$latitude)
-    print(system.file("extdata", "801-bord_l.shp", package = "SCTemperature"))
-
-    print(system.file("extdata", "801-bord_l.shp", package = "SCTemperature"))
     png(file = file.path("C:","bio.data", "bio.snowcrab","maps", "temp_merge_plots", paste(das$WEEKSPAN[1], ".png", sep = "")), width = 800, height = 600)
 
     shpps = importShapefile(pkg.env$shpfile)
@@ -80,6 +76,7 @@ plot_sc_temp_merge <- function(){
 #' @description Update station inventory file that is used to help inform ranges using climate history
 #' @export
 regenStationInventory  = function() {
+  assign('metafile', system.file("extdata", "Station Inventory EN.csv", package = "SCTemperature"), pkg.env)
 
 
   url <- paste0(
