@@ -1341,13 +1341,14 @@ acoustic_file_handler = function(data, fn) {
       ind = which(
         as.character(md_sub$description) == "Temperature" |
           as.character(md_sub$description) == "Average temperature" |
+          as.character(md_sub$description) == "ambient_deg_c" |
           as.character(md_sub$description) == "ambient_mean_deg_c"
       )
       md_sub = md_sub[ind, ]
       md_sub = md_sub[!duplicated(paste(md_sub$date, md_sub$receiver, sep = "-")), ]
 
       if (length(ind) == 0) {
-        print("No 'Temperatrue', 'ambient_mean_deg_c' or 'Average temperature' feilds")
+        print("No 'Temperature', 'ambient_dec_c', 'ambient_mean_deg_c' or 'Average temperature' fields")
         next()
       }
 
