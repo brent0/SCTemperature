@@ -4,10 +4,12 @@
 \alias{Populate}
 \title{Populate}
 \usage{
-Populate(fn = NA)
+Populate(fn = NA, test = T)
 }
 \arguments{
 \item{fn}{The folder path that contains the temperature files to write}
+
+\item{test}{If true clear test tables and writes results for review, If False writes to main tables.}
 }
 \value{
 TRUE on success

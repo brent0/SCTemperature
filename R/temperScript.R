@@ -8,7 +8,7 @@ assign('GlobLat', NULL, pkg.env)
 assign('GlobLon', NULL, pkg.env)
 assign('GlobDep', NULL, pkg.env)
 assign('tz', "America/Halifax", pkg.env)
-
+assign('testwrite', TRUE, pkg.env)
 
 
 # Function to plot color bar
@@ -96,11 +96,14 @@ regenStationInventory  = function() {
 #' @title Populate
 #' @description  The prefered method of entry. Writes temperature data to oracle database from files that have formatted header information. See description file for header format information.
 #' @param fn The folder path that contains the temperature files to write
+#' @param test If true clear test tables and writes results for review, If False writes to main tables.
 #' @import ROracle lubridate DBI
 #' @return TRUE on success
 #' @export
-Populate = function(fn = NA) {
+Populate = function(fn = NA, test = T) {
 
+  if(test) Sys.setenv(testwrite = T)
+  else Sys.setenv(testwrite = F)
   Sys.setenv(TZ = "America/Halifax")
   Sys.setenv(ORA_SDTZ = "America/Halifax")
   drv <- DBI::dbDriver("Oracle")
@@ -131,6 +134,11 @@ Populate = function(fn = NA) {
                        username = oracle.snowcrab.user,
                        password = oracle.snowcrab.password,
                        dbname = oracle.snowcrab.server)
+
+  if(test){
+    ROracle::dbSendQuery(con8, "TRUNCATE TABLE SC_TEMPERATURE_META_TEST")
+    ROracle::dbSendQuery(con8, "TRUNCATE TABLE SC_TEMPERATURE_BASE_TEST")
+  }
 
   res <-
     ROracle::dbSendQuery(con8, "select DISTINCT FILE_S from SC_TEMPERATURE_META")
@@ -681,7 +689,16 @@ AddTempMetadata = function(PID = NULL,
                          username = oracle.snowcrab.user,
                          password = oracle.snowcrab.password,
                          dbname = oracle.snowcrab.server)
+    if(pkg.env$testwrite){
 
+      ROracle::dbWriteTable(
+        con3,
+        name = "SC_TEMPERATURE_META_TEST",
+        append = T,
+        row.names = F,
+        value = dx
+      )
+    }else{
     ROracle::dbWriteTable(
       con3,
       name = "SC_TEMPERATURE_META",
@@ -689,6 +706,7 @@ AddTempMetadata = function(PID = NULL,
       row.names = F,
       value = dx
     )
+    }
    # M_UID <<- c(M_UID, UID)
     assign('M_UID',  c(pkg.env$M_UID, UID), pkg.env)
     ROracle::dbDisconnect(con3)
@@ -838,7 +856,16 @@ AddTempRawdata = function(fn = NULL,
                            password = oracle.snowcrab.password,
                            dbname = oracle.snowcrab.server)
 
+      if(pkg.env$testwrite){
 
+        ROracle::dbWriteTable(
+          con5,
+          name = "SC_TEMPERATURE_BASE_TEST",
+          append = T,
+          row.names = F,
+          value = dx
+        )
+      }else{
       ROracle::dbWriteTable(
         con5,
         name = "SC_TEMPERATURE_BASE",
@@ -846,6 +873,7 @@ AddTempRawdata = function(fn = NULL,
         row.names = F,
         value = dx
       )
+      }
       alluid = paste0(unique(dx$T_UID))
      # T_UID <<- c(T_UID, alluid)
       assign('T_UID', c(pkg.env$T_UID, alluid), pkg.env)
@@ -1328,12 +1356,49 @@ standardize.temp = function(fn,
 #' @export
 acoustic_file_handler = function(data, fn) {
 
+  #handle date formatting issues here first
+  gf = guess_formats(data$date, c("mdy", "dmy", "ymd", "ydm"))
+  gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
+  if(gf == "%m-%d-%Y") data$date = mdy(data$date)
+  if(gf == "%d-%m-%Y") data$date = dmy(data$date)
+  if(gf == "%Y-%d-%m") data$date = ydm(data$date)
+  if(gf == "%Y-%d-%m") data$date = ymd(data$date)
+
+  gf = guess_formats(data$deploy_date, c("mdy_HM", "mdy_HMS","dmy_HMS", "dmy_HM", "ymd_HMS", "ymd_HM"))
+  gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
+  if(gf == "%m-%d-%Y %H:%M") data$deploy_date = mdy_hm(data$deploy_date)
+  if(gf == "%m-%d-%Y %H:%M:%S") data$deploy_date = mdy_hms(data$deploy_date)
+  if(gf == "%d-%m-%Y %H:%M:%S") data$deploy_date = dmy_hms(data$deploy_date)
+  if(gf == "%d-%m-%Y %H:%M") data$deploy_date = dmy_hm(data$deploy_date)
+  if(gf == "%Y-%m-%d %H:%M:%S") data$deploy_date = ymd_hms(data$deploy_date)
+  if(gf == "%Y-%m-%d %H:%M") data$deploy_date = ymd_hm(data$deploy_date)
+
+  #handle the case where not haul date provided
+  if (!any(as.character(data$recover_date) != "") || all(is.na(data$recover_date))) {
+
+  }
+  else{
+  gf = guess_formats(data$recover_date, c("mdy_HM", "mdy_HMS","dmy_HMS", "dmy_HM", "ymd_HMS", "ymd_HM"))
+  gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
+  if(gf == "%m-%d-%Y %H:%M") data$recover_date = mdy_hm(data$recover_date)
+  if(gf == "%m-%d-%Y %H:%M:%S") data$recover_date = mdy_hms(data$recover_date)
+  if(gf == "%d-%m-%Y %H:%M:%S") data$recover_date = dmy_hms(data$recover_date)
+  if(gf == "%d-%m-%Y %H:%M") data$recover_date = dmy_hm(data$recover_date)
+  if(gf == "%Y-%m-%d %H:%M:%S") data$recover_date = ymd_hms(data$recover_date)
+  if(gf == "%Y-%m-%d %H:%M") data$recover_date = ymd_hm(data$recover_date)
+  }
+
+
   mmpid = split(data, data$station_name)
   for (k in 1:length(mmpid)) {
     mm_sub = mmpid[[k]]
     print(as.character(mm_sub$station_name[1]))
-    #loop through each deployment
+    #In case where deployment date is same a record date
+    if(length(unique(mm_sub$deploy_date)) > 50){ #Pick some number of unreasonable deployments
+      mm_sub$deploy_date = min(mm_sub$deploy_date)
+    }
     mdpid = split(mm_sub, as.character(mm_sub$deploy_date))
+    #loop through each deployment
     for (j in 1:length(mdpid)) {
       md_sub = mdpid[[j]]
 
@@ -1344,7 +1409,7 @@ acoustic_file_handler = function(data, fn) {
           as.character(md_sub$description) == "ambient_mean_deg_c"
       )
       md_sub = md_sub[ind, ]
-      md_sub = md_sub[!duplicated(paste(md_sub$date, md_sub$receiver, sep = "-")), ]
+      md_sub = md_sub[!duplicated(paste(as.character(md_sub$date), md_sub$receiver, sep = "-")), ]
 
       if (length(ind) == 0) {
         print("No 'Temperatrue', 'ambient_mean_deg_c' or 'Average temperature' feilds")
@@ -1353,16 +1418,19 @@ acoustic_file_handler = function(data, fn) {
 
 
       #Order by date
-      md_sub$sdate = dmy(as.character(md_sub$date), tz = "UTC")
-
-      if (any(is.na(md_sub$sdate))) {
-        md_sub$sdate = ymd(as.character(md_sub$date), tz = "UTC")
-      }
-      md_sub = md_sub[order(md_sub$sdate), ]
+      # md_sub$sdate = dmy(as.character(md_sub$date), tz = "UTC")
+      #
+      # if (any(is.na(md_sub$sdate))) {
+      #   md_sub$sdate = ymd(as.character(md_sub$date), tz = "UTC")
+      # }
+      # if (any(is.na(md_sub$sdate))) {
+      #   md_sub$sdate = mdy(as.character(md_sub$date), tz = "UTC")
+      # }
+      md_sub = md_sub[order(md_sub$date), ]
 
       muid = paste(as.character(md_sub$station_name[1]),
                    as.character(length(which(
-                     grepl(as.character(md_sub$station_name[1]), T_UID)
+                     grepl(as.character(md_sub$station_name[1]), pkg.env$T_UID)
                    )) + 1),
                    sep = "-")
       loc = NA
@@ -1379,7 +1447,7 @@ acoustic_file_handler = function(data, fn) {
         loc = "SABMPA"
         pro = "V2LSCF"
       }
-      span = interval(md_sub$sdate[1], md_sub$sdate[2])
+      span = interval(md_sub$date[1], md_sub$date[2])
 
       rate = as.character(as.period(span, unit = "hours"))
 
@@ -1396,20 +1464,24 @@ acoustic_file_handler = function(data, fn) {
       }
       if (any(grepl("°C", md_sub$units)))
         units = "Celsius"
+
+      hauldate = md_sub$recover_date[1]
+      #handle the case where not haul date provided
+      if (!any(as.character(data$recover_date) != "") || all(is.na(data$recover_date))) {
+        hauldate = max(md_sub$date)
+      }
+
       ##..Add others here##
 
-      hauldate = dmy_hm(as.character(md_sub$recover_date[1]), tz = "UTC")
-      if (any(is.na(hauldate))) {
-        hauldate = ymd_hms(as.character(md_sub$recover_date[1]), tz = "UTC")
-      }
-      setdate = dmy_hm(as.character(md_sub$deploy_date[1]), tz = "UTC")
-      if (any(is.na(setdate))) {
-        setdate = ymd_hms(as.character(md_sub$deploy_date[1]), tz = "UTC")
-      }
-      #handle the case where not haul date provided
-      if (!any(as.character(md_sub$recover_date) != "")) {
-        hauldate = max(md_sub$sdate)
-      }
+      # hauldate = dmy_hm(as.character(md_sub$recover_date[1]), tz = "UTC")
+      # if (any(is.na(hauldate))) {
+      #   hauldate = ymd_hms(as.character(md_sub$recover_date[1]), tz = "UTC")
+      # }
+      # setdate = dmy_hm(as.character(md_sub$deploy_date[1]), tz = "UTC")
+      # if (any(is.na(setdate))) {
+      #   setdate = ymd_hms(as.character(md_sub$deploy_date[1]), tz = "UTC")
+      # }
+
 
       dx = data.frame(
         muid,
@@ -1420,7 +1492,7 @@ acoustic_file_handler = function(data, fn) {
           as.character(md_sub$receiver[1]), "-"
         ))[1],
         as.character(md_sub$rcv_serial_no[1]),
-        setdate,
+        md_sub$deploy_date[1],
         hauldate,
         rate,
         NA,
@@ -1431,7 +1503,7 @@ acoustic_file_handler = function(data, fn) {
         units,
         "Temp_Only One_Day_Buffer_Exclusion",
         NA,
-        setdate + days(1),
+        md_sub$deploy_date[1] + days(1),
         hauldate - days(1),
         stringsAsFactors = F
       )
@@ -1461,7 +1533,7 @@ acoustic_file_handler = function(data, fn) {
 
       basedat = data.frame(
         muiddx,
-        md_sub$sdate,
+        md_sub$date,
         md_sub$dep_lat,
         md_sub$dep_long,
         md_sub$data,
@@ -1490,7 +1562,16 @@ acoustic_file_handler = function(data, fn) {
             password = oracle.snowcrab.password,
             dbname = oracle.snowcrab.server
           )
+        if(pkg.env$testwrite){
 
+          ROracle::dbWriteTable(
+            con3,
+            name = "SC_TEMPERATURE_META_TEST",
+            append = T,
+            row.names = F,
+            value = dx
+          )
+        }else{
         ROracle::dbWriteTable(
           con3,
           name = "SC_TEMPERATURE_META",
@@ -1498,6 +1579,7 @@ acoustic_file_handler = function(data, fn) {
           row.names = F,
           value = dx
         )
+        }
        # M_UID <<- c(M_UID, muid)
         assign('M_UID', c(pkg.env$M_UID, muid), pkg.env)
         ROracle::dbDisconnect(con3)
@@ -1513,7 +1595,16 @@ acoustic_file_handler = function(data, fn) {
             dbname = oracle.snowcrab.server
           )
 
+        if(pkg.env$testwrite){
 
+          ROracle::dbWriteTable(
+            con5,
+            name = "SC_TEMPERATURE_BASE_TEST",
+            append = T,
+            row.names = F,
+            value = basedat
+          )
+        }else{
         ROracle::dbWriteTable(
           con5,
           name = "SC_TEMPERATURE_BASE",
@@ -1521,12 +1612,13 @@ acoustic_file_handler = function(data, fn) {
           row.names = F,
           value = basedat
         )
+        }
         alluid = paste0(unique(basedat$T_UID))
         #T_UID <<- c(T_UID, alluid)
         assign('T_UID', c(pkg.env$T_UID, alluid), pkg.env)
         ROracle::dbDisconnect(con5)
       }
-
+      basedat$T_DATE = as.POSIXct(basedat$T_DATE)
       p = ggplot(data = basedat, main = muid, aes(x = T_DATE, y = TEMP)) + geom_line() + ggtitle(muid) + xlab("Date") + ylab("Temp °C")
       p = p + scale_x_datetime(labels = date_format("%Y-%m"),
                                breaks = date_breaks("months")) + theme(axis.text.x = element_text(angle = 45))
