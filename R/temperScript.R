@@ -136,6 +136,7 @@ Populate = function(fn = NA, test = T) {
                        dbname = oracle.snowcrab.server)
 
   if(test){
+    warning("Writing to temporary tables only!!!  Review SC_TEMPERATURE_META_TEST and SC_TEMPERATURE_BASE_TEST them call populate again with test = T ")
     ROracle::dbSendQuery(con8, "TRUNCATE TABLE SC_TEMPERATURE_META_TEST")
     ROracle::dbSendQuery(con8, "TRUNCATE TABLE SC_TEMPERATURE_BASE_TEST")
   }
