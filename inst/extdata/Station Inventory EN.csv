@@ -1,7 +1,3 @@
-x
-﻿Modified Date: 2018-06-14 02:20 UTC
-"Station Inventory Disclaimer: Please note that this inventory list is a snapshot of stations on our website as of the modified date, and may be subject to change without notice."
-"Station ID Disclaimer: Station IDs are an internal index numbering system and may be subject to change without notice."
 "Name","Province","Climate ID","Station ID","WMO ID","TC ID","Latitude (Decimal Degrees)","Longitude (Decimal Degrees)","Latitude","Longitude","Elevation (m)","First Year","Last Year","HLY First Year","HLY Last Year","DLY First Year","DLY Last Year","MLY First Year","MLY Last Year"
 "ACTIVE PASS","BRITISH COLUMBIA","1010066","14","","","48.87","-123.28","485200000","-1231700000","4","1984","1996","","","1984","1996","1984","1996"
 "ALBERT HEAD","BRITISH COLUMBIA","1010235","15","","","48.4","-123.48","482400000","-1232900000","17","1971","1995","","","1971","1995","1971","1995"

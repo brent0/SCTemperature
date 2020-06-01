@@ -7,8 +7,6 @@
 acoustic_file_handler(data, fn)
 }
 \arguments{
-\item{fn}{The data to process}
-
 \item{fn}{The place to write the plot}
 }
 \value{

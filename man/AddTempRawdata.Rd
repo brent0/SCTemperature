@@ -4,8 +4,17 @@
 \alias{AddTempRawdata}
 \title{AddTempRawdata}
 \usage{
-AddTempRawdata(fn = NULL, UID = NULL, ProjectId = NULL, Lat = NULL,
-  Lon = NULL, HaulDate_Start = NULL, HaulDate_End = NULL, metadx = NULL)
+AddTempRawdata(
+  fn = NULL,
+  UID = NULL,
+  ProjectId = NULL,
+  Lat = NULL,
+  Lon = NULL,
+  Observed_Depth = NULL,
+  HaulDate_Start = NULL,
+  HaulDate_End = NULL,
+  metadx = NULL
+)
 }
 \description{
 Internal function. Writes rawdata to database

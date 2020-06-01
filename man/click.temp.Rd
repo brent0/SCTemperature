@@ -4,12 +4,14 @@
 \alias{click.temp}
 \title{click.temp}
 \usage{
-click.temp(da = NA, af = NA, uid = NA)
+click.temp(da = NA, af = NA, ad = NULL, uid = NA)
 }
 \arguments{
 \item{da}{The data to plot}
 
 \item{af}{The subset of data that is code informed}
+
+\item{ad}{Optional indicies that have already been added}
 
 \item{uid}{The unique identifier for plotting}
 }

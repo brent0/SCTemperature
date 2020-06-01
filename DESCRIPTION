@@ -36,4 +36,4 @@ Description: Contains methods for standardizing data and filtering data to when 
 License: MIT
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.0.1
+RoxygenNote: 7.1.0

@@ -4,11 +4,27 @@
 \alias{AddTempMetadata}
 \title{AddTempMetadata}
 \usage{
-AddTempMetadata(PID = NULL, UID = NULL, Project = NA, Location = NA,
-  RecorderType = NA, RecorderID = NA, StartDate = NA, EndDate = NA,
-  RecordingRate = NA, Port = NA, File = NA, LAT.DD = NA, LON.DD = NA,
-  Observed_Depth = NA, UnitsforTemp = NA, QAQC = "", Notes = NA,
-  HaulDate_Start = NA, HaulDate_End = NA)
+AddTempMetadata(
+  PID = NULL,
+  UID = NULL,
+  Project = NA,
+  Location = NA,
+  RecorderType = NA,
+  RecorderID = NA,
+  StartDate = NA,
+  EndDate = NA,
+  RecordingRate = NA,
+  Port = NA,
+  File = NA,
+  LAT.DD = NA,
+  LON.DD = NA,
+  Observed_Depth = NA,
+  UnitsforTemp = NA,
+  QAQC = "",
+  Notes = NA,
+  HaulDate_Start = NA,
+  HaulDate_End = NA
+)
 }
 \description{
 Internal function. Writes metadata to database
