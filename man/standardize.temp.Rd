@@ -4,7 +4,14 @@
 \alias{standardize.temp}
 \title{standardize.temp}
 \usage{
-standardize.temp(fn, uid = NULL, lat = NULL, lon = NULL, subset = NULL)
+standardize.temp(
+  fn,
+  uid = NULL,
+  lat = NULL,
+  lon = NULL,
+  depth = NULL,
+  subset = NULL
+)
 }
 \arguments{
 \item{fn}{The file with sensordata to read}

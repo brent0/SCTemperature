@@ -419,6 +419,7 @@ click.temp = function(da = NA,
 
   #Set up plot range
   if(!is.null(af)){
+
   if ((nrow(af) / nrow(da)) < .05) {
     sdate = af$T_DATE[1] - days(5)
     edate = af$T_DATE[length(af$T_DATE)] + days(5)
@@ -428,8 +429,10 @@ click.temp = function(da = NA,
       da = da[which(da$T_DATE <= edate),]
   }
   }
+
   yrange <- range(c(da$TEMP, da$TEMP + 4, da$TEMP - 4))
-xrange <- range(c(da$T_DATE[1], da$T_DATE[length(da$T_DATE)]))
+
+  xrange <- range(c(da$T_DATE[1], da$T_DATE[length(da$T_DATE)]))
   xy <- xy.coords(da$T_DATE, da$TEMP)
   xval <- xy$x
   yval <- xy$y
@@ -437,7 +440,7 @@ xrange <- range(c(da$T_DATE[1], da$T_DATE[length(da$T_DATE)]))
   result = NULL
 
   active = T
-  print(da)
+
   while (active) {
       x11(width = 25, height = 15)
     par(mar = c(5, 8, 4, 4) + 0.1)
@@ -875,6 +878,7 @@ AddTempRawdata = function(fn = NULL,
         uid = UID,
         lat = Lat,
         lon = Lon,
+        depth = Observed_Depth,
         subset = sub
       )
 
@@ -1070,6 +1074,7 @@ standardize.temp = function(fn,
                             uid = NULL,
                             lat = NULL,
                             lon = NULL,
+                            depth = NULL,
                             subset = NULL) {
 
   ret = NULL
@@ -1206,20 +1211,34 @@ standardize.temp = function(fn,
         ds = data[, datecolumn][1]
 
         if (grepl("-", ds)) {
-          if (is.null(timediffutc)) {
-            T_DATE = lubridate::ymd_hms(paste(data[, datecolumn], data[, timecolumn], sep = " "), tz = tz)
-          }
+          datedat = paste(data[, datecolumn], data[, timecolumn], sep = " ")
+          gf = guess_formats(datedat, c("mdy_HM", "mdy_HMS","dmy_HMS", "dmy_HM", "ymd_HMS", "ymd_HM"))
+          gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
+          if(gf == "%m-%d-%Y %H:%M") T_DATE =  lubridate::mdy_hm(datedat)
+          if(gf == "%m-%d-%Y %H:%M:%S") T_DATE =  lubridate::mdy_hms(datedat)
+          if(gf == "%d-%m-%Y %H:%M:%S") T_DATE =  lubridate::dmy_hms(datedat)
+          if(gf == "%d-%m-%Y %H:%M") T_DATE =  lubridate::dmy_hm(datedat)
+          if(gf == "%Y-%m-%d %H:%M:%S") T_DATE =  lubridate::ymd_hms(datedat)
+          if(gf == "%Y-%m-%d %H:%M") T_DATE =  lubridate::ymd_hm(datedat)
+
+          if (is.null(timediffutc)) {}
           else{
-            T_DATE = lubridate::ymd_hms(paste(data[, datecolumn], data[, timecolumn], sep = " "), tz = tz)
-            T_DATE = T_DATE + timediffutc
+             T_DATE = T_DATE + timediffutc
           }
         }
         if (grepl("/", ds)) {
-          if (is.null(timediffutc)) {
-            T_DATE = lubridate::dmy_hms(paste(data[, datecolumn], data[, timecolumn], sep = " "), tz = tz)
-          }
+          datedat = paste(data[, datecolumn], data[, timecolumn], sep = " ")
+          gf = guess_formats(datedat, c("mdy_HM", "mdy_HMS","dmy_HMS", "dmy_HM", "ymd_HMS", "ymd_HM"))
+          gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
+          if(gf == "%m/%d/%Y %H:%M") T_DATE =  lubridate::mdy_hm(datedat)
+          if(gf == "%m/%d/%Y %H:%M:%S") T_DATE =  lubridate::mdy_hms(datedat)
+          if(gf == "%d/%m/%Y %H:%M:%S") T_DATE =  lubridate::dmy_hms(datedat)
+          if(gf == "%d/%m/%Y %H:%M") T_DATE =  lubridate::dmy_hm(datedat)
+          if(gf == "%Y/%m/%d %H:%M:%S") T_DATE =  lubridate::ymd_hms(datedat)
+          if(gf == "%Y/%m/%d %H:%M") T_DATE =  lubridate::ymd_hm(datedat)
+
+          if (is.null(timediffutc)) {}
           else{
-            T_DATE = lubridate::dmy_hms(paste(data[, datecolumn], data[, timecolumn], sep = " "), tz = tz)
             T_DATE = T_DATE + timediffutc
           }
         }
@@ -1256,8 +1275,20 @@ standardize.temp = function(fn,
 
     LAT_DD = as.numeric(LAT_DD)
     LON_DD = as.numeric(LON_DD)
-
-    ret$data = data.frame(T_UID, T_DATE, LAT_DD, LON_DD, TEMP, stringsAsFactors =  F)
+    if(is.null(ret$Observed_Depth)){
+      DEPTH_M = rep(NA, length(TEMP))
+    }
+    else{
+      DEPTH_M = rep(ret$Observed_Depth, length(TEMP))
+    }
+    if(!is.null(depth)){
+      DEPTH_M = rep(depth, length(TEMP))
+    }
+    depthcolumn = grep("Depth", names(data), ignore.case = T)
+    if(length(depthcolumn) > 0){
+      DEPTH_M = data[, depthcolumn]
+    }
+    ret$data = data.frame(T_UID, T_DATE, LAT_DD, LON_DD, TEMP, DEPTH_M, stringsAsFactors =  F)
   }
 
   if (grepl("CTS", fn)) {
@@ -1278,10 +1309,30 @@ standardize.temp = function(fn,
     ds = data[, datecolumn][1]
 
     if (grepl("-", ds)) {
-      T_DATE = lubridate::ymd_hms(paste(data[, datecolumn], data[, timecolumn], sep = " "), tz = "America/Halifax")
+      datedat = paste(data[, datecolumn], data[, timecolumn], sep = " ")
+      gf = guess_formats(datedat, c("mdy_HM", "mdy_HMS","dmy_HMS", "dmy_HM", "ymd_HMS", "ymd_HM"))
+      gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
+      if(gf == "%m-%d-%Y %H:%M") T_DATE =  lubridate::mdy_hm(datedat)
+      if(gf == "%m-%d-%Y %H:%M:%S") T_DATE =  lubridate::mdy_hms(datedat)
+      if(gf == "%d-%m-%Y %H:%M:%S") T_DATE =  lubridate::dmy_hms(datedat)
+      if(gf == "%d-%m-%Y %H:%M") T_DATE =  lubridate::dmy_hm(datedat)
+      if(gf == "%Y-%m-%d %H:%M:%S") T_DATE =  lubridate::ymd_hms(datedat)
+      if(gf == "%Y-%m-%d %H:%M") T_DATE =  lubridate::ymd_hm(datedat)
+
+     # T_DATE = lubridate::ymd_hms(paste(data[, datecolumn], data[, timecolumn], sep = " "), tz = "America/Halifax")
     }
     if (grepl("/", ds)) {
-      T_DATE = lubridate::dmy_hms(paste(data[, datecolumn], data[, timecolumn], sep = " "), tz = "America/Halifax")
+      datedat = paste(data[, datecolumn], data[, timecolumn], sep = " ")
+      gf = guess_formats(datedat, c("mdy_HM", "mdy_HMS","dmy_HMS", "dmy_HM", "ymd_HMS", "ymd_HM"))
+      gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
+      if(gf == "%m/%d/%Y %H:%M") T_DATE =  lubridate::mdy_hm(datedat)
+      if(gf == "%m/%d/%Y %H:%M:%S") T_DATE =  lubridate::mdy_hms(datedat)
+      if(gf == "%d/%m/%Y %H:%M:%S") T_DATE =  lubridate::dmy_hms(datedat)
+      if(gf == "%d/%m/%Y %H:%M") T_DATE =  lubridate::dmy_hm(datedat)
+      if(gf == "%Y/%m/%d %H:%M:%S") T_DATE =  lubridate::ymd_hms(datedat)
+      if(gf == "%Y/%m/%d %H:%M") T_DATE =  lubridate::ymd_hm(datedat)
+
+     # T_DATE = lubridate::dmy_hms(paste(data[, datecolumn], data[, timecolumn], sep = " "), tz = "America/Halifax")
     }
 
 
@@ -1289,6 +1340,9 @@ standardize.temp = function(fn,
     if (length(tempcolumn) == 0)
       tempcolumn = grep("Temp", names(data), ignore.case = T)
     TEMP = as.numeric(data[, tempcolumn])
+
+    depthcolumn = grep("Depth.m", names(data), ignore.case = T)
+    DEPtH_M = as.numeric(data[, depthcolumn])
 
     LAT_DD = trimws(unlist(strsplit(header[grep("latitude", header, ignore.case = TRUE)], ": "))[2])
     LON_DD = trimws(unlist(strsplit(header[grep("longitude", header, ignore.case = TRUE)], ": "))[2])
@@ -1315,7 +1369,7 @@ standardize.temp = function(fn,
     LON_DD = as.numeric(LON_DD)
 
 
-    ret$data = data.frame(T_UID, T_DATE, LAT_DD, LON_DD, TEMP, stringsAsFactors =  F)
+    ret$data = data.frame(T_UID, T_DATE, LAT_DD, LON_DD, TEMP, DEPTH_M, stringsAsFactors =  F)
     td <-
       seconds_to_period(difftime(ret$data$T_DATE[2], ret$data$T_DATE[1], units = "secs"))
     ret$RecordingRate = sprintf('%02d:%02d:%02d', td@hour, minute(td), second(td))
@@ -1580,6 +1634,8 @@ standardize.temp = function(fn,
       LAT_DD = rep(LAT_DD, length(TEMP))
     if (length(LON_DD) == 1)
       LON_DD = rep(LON_DD, length(TEMP))
+    #No depth for HOBO
+    DEPTH_M = rep(NA, length(TEMP))
 
     LAT_DD = as.numeric(LAT_DD)
     LON_DD = as.numeric(LON_DD)
@@ -1590,7 +1646,7 @@ standardize.temp = function(fn,
     for(k in 1:length(in.ind)){
       INWATER[in.ind[k]:out.ind[k]] = 1
     }
-    ret$data = data.frame(T_UID, T_DATE, LAT_DD, LON_DD, TEMP, INWATER, stringsAsFactors =  F)
+    ret$data = data.frame(T_UID, T_DATE, LAT_DD, LON_DD, TEMP, DEPTH_M, INWATER, stringsAsFactors =  F)
 
     rmind = which(is.na(ret$data$TEMP))
     if(length(rmind)>0){
@@ -1703,6 +1759,7 @@ acoustic_file_handler = function(data, fn) {
   if(gf == "%d-%m-%Y") data$date = dmy(data$date)
   if(gf == "%Y-%d-%m") data$date = ydm(data$date)
   if(gf == "%Y-%d-%m") data$date = ymd(data$date)
+  if(gf == "%d/%m/%Y") data$date = dmy(data$date)
 
   gf = guess_formats(data$deploy_date, c("mdy_HM", "mdy_HMS","dmy_HMS", "dmy_HM", "ymd_HMS", "ymd_HM"))
   gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
@@ -1712,6 +1769,7 @@ acoustic_file_handler = function(data, fn) {
   if(gf == "%d-%m-%Y %H:%M") data$deploy_date = dmy_hm(data$deploy_date)
   if(gf == "%Y-%m-%d %H:%M:%S") data$deploy_date = ymd_hms(data$deploy_date)
   if(gf == "%Y-%m-%d %H:%M") data$deploy_date = ymd_hm(data$deploy_date)
+  if(gf == "%d/%m/%Y %H:%M") data$deploy_date = dmy_hm(data$deploy_date)
 
   #handle the case where not haul date provided
   if (!any(as.character(data$recover_date) != "") || all(is.na(data$recover_date))) {
@@ -1726,7 +1784,9 @@ acoustic_file_handler = function(data, fn) {
   if(gf == "%d-%m-%Y %H:%M") data$recover_date = dmy_hm(data$recover_date)
   if(gf == "%Y-%m-%d %H:%M:%S") data$recover_date = ymd_hms(data$recover_date)
   if(gf == "%Y-%m-%d %H:%M") data$recover_date = ymd_hm(data$recover_date)
-  }
+  if(gf == "%d/%m/%Y %H:%M") data$recover_date = dmy_hm(data$recover_date)
+
+   }
 
 
   mmpid = split(data, data$station_name)
@@ -1744,7 +1804,7 @@ acoustic_file_handler = function(data, fn) {
 
       #Remove min and max entries and duplicates
       ind = which(
-        as.character(md_sub$description) == "Temperature" |
+          as.character(md_sub$description) == "Temperature" |
           as.character(md_sub$description) == "Average temperature" |
           as.character(md_sub$description) == "ambient_mean_deg_c"
       )
@@ -1766,6 +1826,7 @@ acoustic_file_handler = function(data, fn) {
       # if (any(is.na(md_sub$sdate))) {
       #   md_sub$sdate = mdy(as.character(md_sub$date), tz = "UTC")
       # }
+
       md_sub = md_sub[order(md_sub$date), ]
 
       muid = paste(as.character(md_sub$station_name[1]),
@@ -1805,11 +1866,14 @@ acoustic_file_handler = function(data, fn) {
       if (any(grepl("°C", md_sub$units)))
         units = "Celsius"
 
+
       hauldate = md_sub$recover_date[1]
+
       #handle the case where not haul date provided
-      if (!any(as.character(data$recover_date) != "") || all(is.na(data$recover_date))) {
-        hauldate = max(md_sub$date)
-      }
+      if(is.na(hauldate)) hauldate = max(md_sub$date)
+      # if (!any(as.character(data$recover_date) != "") || all(is.na(data$recover_date))) {
+      #  hauldate = max(md_sub$date)
+      #}
 
       ##..Add others here##
 
@@ -1868,6 +1932,8 @@ acoustic_file_handler = function(data, fn) {
         "HAUL_DATE_START",
         "HAUL_DATE_END"
       )
+
+
       muiddx = rep(muid, nrow(md_sub))
 
 
@@ -1879,15 +1945,19 @@ acoustic_file_handler = function(data, fn) {
         md_sub$data,
         stringsAsFactors =  F
       )
+
       names(basedat) = c("T_UID", "T_DATE", "LAT_DD", "LON_DD", "TEMP")
+      basedat$DEPTH_M = NA
 
       if (dx$HAUL_DATE_END > dx$HAUL_DATE_START) {
         basedat = trim_to_dates(basedat, dx$HAUL_DATE_START, dx$HAUL_DATE_END, FALSE)
+
       }
       else{
         print("Not Enough DATA")
         next()
       }
+
       if (nrow(basedat) < 1) {
         print("Not Enough DATA")
         next()
