@@ -102,8 +102,14 @@ regenStationInventory  = function() {
 #' @export
 Populate = function(fn = NA, test = T) {
 
-  if(test) Sys.setenv(testwrite = T)
-  else Sys.setenv(testwrite = F)
+  if(test){
+    Sys.setenv(testwrite = T)
+    assign('testwrite', TRUE, pkg.env)
+  }
+  else{
+    Sys.setenv(testwrite = F)
+    assign('testwrite', FALSE, pkg.env)
+  }
   Sys.setenv(TZ = "America/Halifax")
   Sys.setenv(ORA_SDTZ = "America/Halifax")
   drv <- DBI::dbDriver("Oracle")
@@ -280,7 +286,7 @@ Populate = function(fn = NA, test = T) {
               regexpr("</DEPTHUNITS>", head)[1] - 1
             )
           ), ","))
-
+print(DEPTH)
         if (!is.na(DEPTH)) {
           if (tolower(DEPTHUNITS) == "fathoms")
             DEPTH = as.character(as.numeric(DEPTH) * 1.8288)
@@ -2366,7 +2372,6 @@ if(nrow(hw) >0){
 #'  \url{http://www.code10.info/index.php?option=com_content&view=article&id=67:calculating-the-depth-from-pressure&catid=54:cat_coding_algorithms_seawater&Itemid=79}, \url{http://www.code10.info/index.php?option=com_content&view=article&id=67:calculating-the-depth-from-pressure&catid=54:cat_coding_algorithms_seawater&Itemid=79}
 decibar2depth = function( P, lat, Del=0 ) {
 
-
     X = (sin( lat * pi / 180 ))^2 # convert degree decimal to RADs
 
     # GR=GRAVITY VARIATION WITH LATITUDE: ANON (1970) BULLETIN GEODESIQUE
@@ -2374,4 +2379,23 @@ decibar2depth = function( P, lat, Del=0 ) {
     DepthTerm = (((-1.82E-15 * P + 2.279E-10) * P - 2.2512E-5) * P + 9.72659) * P ## assuming (35 psu, 0 C, and P=pressure in decibars )
     DEPTH = DepthTerm / GR + Del / 9.8
     return (DEPTH)
-  }
+}
+
+#' @title read_merge_table
+#' @description  Provided as an example for presentation
+#' @import ROracle DBI
+#' @return data from oracle table
+decibar2depth = function() {
+  drv = DBI::dbDriver("Oracle")
+
+  con = ROracle::dbConnect(drv,
+                       username = oracle.snowcrab.user,
+                       password = oracle.snowcrab.password,
+                       dbname = oracle.snowcrab.server)
+  res <- ROracle::dbSendQuery(con, "ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD'")
+  res <- ROracle::dbSendQuery(con, "ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH24:MI:SSXFF'")
+  res <- ROracle::dbSendQuery(con, "ALTER SESSION SET  NLS_TIMESTAMP_TZ_FORMAT = 'YYYY-MM-DD HH24:MI:SSXFF TZR'")
+  res <- ROracle::dbReadTable(con, "SC_TEMP_MERGE")
+
+  return(res)
+}

@@ -4,7 +4,9 @@
 \alias{decibar2depth}
 \title{decibar2depth}
 \usage{
-decibar2depth(P, lat, Del = 0)
+decibar2depth()
+
+decibar2depth()
 }
 \arguments{
 \item{P}{pressure, in decibars}
@@ -29,7 +31,11 @@ DEEP-SEA RES., 1976, 23, 109-111.
 //   UNESCO technical papers in marine science 44 (1983) -
 //   'Algorithms for computation of fundamental properties of seawater'
  \url{http://www.code10.info/index.php?option=com_content&view=article&id=67:calculating-the-depth-from-pressure&catid=54:cat_coding_algorithms_seawater&Itemid=79}, \url{http://www.code10.info/index.php?option=com_content&view=article&id=67:calculating-the-depth-from-pressure&catid=54:cat_coding_algorithms_seawater&Itemid=79}
+
+data from oracle table
 }
 \description{
 Internal function. This function calculates depth in meters from pressure in decibars using Saunders and Fofonoff's method
+
+Provided as an example for presentation
 }
