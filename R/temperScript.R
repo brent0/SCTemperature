@@ -286,7 +286,7 @@ Populate = function(fn = NA, test = T) {
               regexpr("</DEPTHUNITS>", head)[1] - 1
             )
           ), ","))
-print(DEPTH)
+
         if (!is.na(DEPTH)) {
           if (tolower(DEPTHUNITS) == "fathoms")
             DEPTH = as.character(as.numeric(DEPTH) * 1.8288)
@@ -1756,20 +1756,25 @@ standardize.temp = function(fn,
 #' @import lubridate ggplot2 scales
 #' @return True or False
 #' @export
-acoustic_file_handler = function(data, fn) {
+acoustic_file_handler = function(data, fn){
 
   #handle date formatting issues here first
   gf = guess_formats(data$date, c("mdy", "dmy", "ymd", "ydm"))
   gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
   if(gf == "%m-%d-%Y") data$date = mdy(data$date)
+  if(gf == "%m/%d/%Y") data$date = mdy(data$date)
   if(gf == "%d-%m-%Y") data$date = dmy(data$date)
   if(gf == "%Y-%d-%m") data$date = ydm(data$date)
   if(gf == "%Y-%d-%m") data$date = ymd(data$date)
   if(gf == "%d/%m/%Y") data$date = dmy(data$date)
 
+  data$date = data$date + hms("12:00:00")
+
   gf = guess_formats(data$deploy_date, c("mdy_HM", "mdy_HMS","dmy_HMS", "dmy_HM", "ymd_HMS", "ymd_HM"))
   gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
+
   if(gf == "%m-%d-%Y %H:%M") data$deploy_date = mdy_hm(data$deploy_date)
+  if(gf == "%m/%d/%Y %H:%M") data$deploy_date = mdy_hm(data$deploy_date)
   if(gf == "%m-%d-%Y %H:%M:%S") data$deploy_date = mdy_hms(data$deploy_date)
   if(gf == "%d-%m-%Y %H:%M:%S") data$deploy_date = dmy_hms(data$deploy_date)
   if(gf == "%d-%m-%Y %H:%M") data$deploy_date = dmy_hm(data$deploy_date)
@@ -1782,15 +1787,25 @@ acoustic_file_handler = function(data, fn) {
 
   }
   else{
-  gf = guess_formats(data$recover_date, c("mdy_HM", "mdy_HMS","dmy_HMS", "dmy_HM", "ymd_HMS", "ymd_HM"))
-  gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
-  if(gf == "%m-%d-%Y %H:%M") data$recover_date = mdy_hm(data$recover_date)
-  if(gf == "%m-%d-%Y %H:%M:%S") data$recover_date = mdy_hms(data$recover_date)
-  if(gf == "%d-%m-%Y %H:%M:%S") data$recover_date = dmy_hms(data$recover_date)
-  if(gf == "%d-%m-%Y %H:%M") data$recover_date = dmy_hm(data$recover_date)
-  if(gf == "%Y-%m-%d %H:%M:%S") data$recover_date = ymd_hms(data$recover_date)
-  if(gf == "%Y-%m-%d %H:%M") data$recover_date = ymd_hm(data$recover_date)
-  if(gf == "%d/%m/%Y %H:%M") data$recover_date = dmy_hm(data$recover_date)
+
+
+    gf = guess_formats(data$recover_date, c("mdy", "dmy", "ymd", "ydm", "mdy_HM", "mdy_HMS","dmy_HMS", "dmy_HM", "ymd_HMS", "ymd_HM"))
+    gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
+
+    if(gf == "%m-%d-%Y") data$recover_date = mdy(data$recover_date)
+    if(gf == "%d-%m-%Y") data$recover_date = dmy(data$recover_date)
+    if(gf == "%Y-%d-%m") data$recover_date = ydm(data$recover_date)
+    if(gf == "%Y-%d-%m") data$recover_date = ymd(data$recover_date)
+    if(gf == "%d/%m/%Y") data$recover_date = dmy(data$recover_date)
+    if(gf == "%m-%d-%Y %H:%M") data$recover_date = mdy_hm(data$recover_date)
+    if(gf == "%m/%d/%Y %H:%M") data$recover_date = mdy_hm(data$recover_date)
+    if(gf == "%m-%d-%Y %H:%M:%S") data$recover_date = mdy_hms(data$recover_date)
+    if(gf == "%d-%m-%Y %H:%M:%S") data$recover_date = dmy_hms(data$recover_date)
+    if(gf == "%d-%m-%Y %H:%M") data$recover_date = dmy_hm(data$recover_date)
+    if(gf == "%Y-%m-%d %H:%M:%S") data$recover_date = ymd_hms(data$recover_date)
+    if(gf == "%Y-%m-%d %H:%M") data$recover_date = ymd_hm(data$recover_date)
+    if(gf == "%d/%m/%Y %H:%M") data$recover_date = dmy_hm(data$recover_date)
+
 
    }
 
@@ -1799,7 +1814,7 @@ acoustic_file_handler = function(data, fn) {
   for (k in 1:length(mmpid)) {
     mm_sub = mmpid[[k]]
     print(as.character(mm_sub$station_name[1]))
-    #In case where deployment date is same a record date
+    #In case where deployment date is same as record date
     if(length(unique(mm_sub$deploy_date)) > 50){ #Pick some number of unreasonable deployments
       mm_sub$deploy_date = min(mm_sub$deploy_date)
     }
@@ -1812,7 +1827,8 @@ acoustic_file_handler = function(data, fn) {
       ind = which(
           as.character(md_sub$description) == "Temperature" |
           as.character(md_sub$description) == "Average temperature" |
-          as.character(md_sub$description) == "ambient_mean_deg_c"
+          as.character(md_sub$description) == "ambient_mean_deg_c" |
+          as.character(md_sub$description) == "ambient_deg_c"
       )
       md_sub = md_sub[ind, ]
       md_sub = md_sub[!duplicated(paste(as.character(md_sub$date), md_sub$receiver, sep = "-")), ]
@@ -1850,7 +1866,12 @@ acoustic_file_handler = function(data, fn) {
         loc = "South of Halifax"
         pro = "OTN Halifax"
       }
+
       if (grepl("V2LSCF", as.character(md_sub$catalognumber[1]))) {
+        loc = "SABMPA"
+        pro = "V2LSCF"
+      }
+      if(grepl("V2LSCF", fn) ){
         loc = "SABMPA"
         pro = "V2LSCF"
       }
@@ -1873,10 +1894,17 @@ acoustic_file_handler = function(data, fn) {
         units = "Celsius"
 
 
-      hauldate = md_sub$recover_date[1]
-
+      hauldate = md_sub$recover_date
+      hauldate = max(hauldate)
       #handle the case where not haul date provided
       if(is.na(hauldate)) hauldate = max(md_sub$date)
+
+
+      deploydate = md_sub$deploy_date
+      deploydate = min(deploydate)
+      #handle the case where not haul date provided
+      if(is.na(deploydate)) hauldate = min(md_sub$date)
+
       # if (!any(as.character(data$recover_date) != "") || all(is.na(data$recover_date))) {
       #  hauldate = max(md_sub$date)
       #}
@@ -1891,8 +1919,6 @@ acoustic_file_handler = function(data, fn) {
       # if (any(is.na(setdate))) {
       #   setdate = ymd_hms(as.character(md_sub$deploy_date[1]), tz = "UTC")
       # }
-
-
       dx = data.frame(
         muid,
         as.character(md_sub$station_name[1]),
@@ -1902,7 +1928,7 @@ acoustic_file_handler = function(data, fn) {
           as.character(md_sub$receiver[1]), "-"
         ))[1],
         as.character(md_sub$rcv_serial_no[1]),
-        md_sub$deploy_date[1],
+        deploydate,
         hauldate,
         rate,
         NA,
@@ -1913,7 +1939,7 @@ acoustic_file_handler = function(data, fn) {
         units,
         "Temp_Only One_Day_Buffer_Exclusion",
         NA,
-        md_sub$deploy_date[1] + days(1),
+        deploydate + days(1),
         hauldate - days(1),
         stringsAsFactors = F
       )
