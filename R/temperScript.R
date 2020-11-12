@@ -93,6 +93,40 @@ regenStationInventory  = function() {
   )
 }
 
+#' @title Verified.appendData
+#' @description  Update maintables with temp table data. Only do this after manual verrification.
+#' @import ROracle DBI tcltk
+#' @return TRUE on success
+#' @export
+Verified.appendData = function() {
+  drv <- DBI::dbDriver("Oracle")
+  con8 <<-
+    ROracle::dbConnect(drv,
+                       username = oracle.snowcrab.user,
+                       password = oracle.snowcrab.password,
+                       dbname = oracle.snowcrab.server)
+
+  wri <- tkmessageBox(
+    title = "Continue?",
+    message = "Answering yes will add all data from temperature test tables to temperature main tables. Are you sure?",
+    icon = "info",
+    type = "yesno"
+  )
+  if (grepl("yes", wri)) {
+    warning("Writing to main tables")
+    res = ROracle::dbSendQuery(con8, "INSERT INTO SC_TEMPERATURE_META SELECT * FROM SC_TEMPERATURE_META_TEST")
+    warning("METADATA")
+    ROracle::dbCommit(con8)
+    res2 = ROracle::dbSendQuery(con8, "INSERT INTO SC_TEMPERATURE_BASE SELECT * FROM SC_TEMPERATURE_BASE_TEST")
+    warning("BASEDATA")
+    ROracle::dbCommit(con8)
+    return(TRUE)
+}
+else{
+  warning("You chose not to append  data")
+  return(FALSE)
+}
+}
 #' @title Populate
 #' @description  The prefered method of entry. Writes temperature data to oracle database from files that have formatted header information. See description file for header format information.
 #' @param fn The folder path that contains the temperature files to write
@@ -101,7 +135,14 @@ regenStationInventory  = function() {
 #' @return TRUE on success
 #' @export
 Populate = function(fn = NA, test = T) {
-
+  assign('con', NULL, pkg.env)
+  assign('M_UID', NULL, pkg.env)
+  assign('T_UID', NULL, pkg.env)
+  assign('GlobLat', NULL, pkg.env)
+  assign('GlobLon', NULL, pkg.env)
+  assign('GlobDep', NULL, pkg.env)
+  assign('tz', "America/Halifax", pkg.env)
+  assign('testwrite', TRUE, pkg.env)
   if(test){
     Sys.setenv(testwrite = T)
     assign('testwrite', TRUE, pkg.env)
