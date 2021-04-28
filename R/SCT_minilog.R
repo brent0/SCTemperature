@@ -1,11 +1,15 @@
 #' @title SCT_minilog
-#' @description Function that standardizes seabird formatted files
+#' @description Function that standardizes minilog formatted files
 #' @param fn The data to process
 #' @param ret List of already procesed SCHEADER data
+#' @param uid Pass determined uid
+#' @param lat Pass determined lat
+#' @param lon Pass determined lon
+#' @param depth Pass determined depth
 #' @import lubridate
 #' @return List of formatted data
 #' @export
-SCT_minilog = function(fn, ret){
+SCT_minilog = function(fn, ret, uid, lat, lon, depth){
 
 miniold = F
 

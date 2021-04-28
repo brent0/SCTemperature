@@ -2,10 +2,14 @@
 #' @description Function that standardizes HOBO formatted files
 #' @param fn The data to process
 #' @param ret List of already procesed SCHEADER data
+#' @param uid Pass determined uid
+#' @param lat Pass determined lat
+#' @param lon Pass determined lon
+#' @param depth Pass determined depth
 #' @import lubridate
 #' @return List of formatted data
 #' @export
-SCT_hobo = function(fn, ret){
+SCT_hobo = function(fn, ret, uid, lat, lon, depth){
 
   ind = grep("Water Detect,Host Connect,Button Down", readLines(fn, n = 100), ignore.case = TRUE)
   header = readLines(fn, n = ind)

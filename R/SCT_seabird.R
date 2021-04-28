@@ -2,10 +2,14 @@
 #' @description Function that standardizes seabird formatted files
 #' @param fn The data to process
 #' @param ret List of already procesed SCHEADER data
+#' @param uid Pass determined uid
+#' @param lat Pass determined lat
+#' @param lon Pass determined lon
+#' @param depth Pass determined depth
 #' @import lubridate
 #' @return List of formatted data
 #' @export
-SCT_seabird = function(fn, ret){
+SCT_seabird = function(fn, ret, uid, lat, lon, depth){
 
   ind = grep("start sample number", readLines(fn, n = 100), ignore.case = TRUE)
   header = readLines(fn, n = ind)

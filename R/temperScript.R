@@ -623,25 +623,25 @@ standardize.temp = function(fn,
   #Check if this is a minilog logger
   if (any(grepl("Minilog", header))) {
     known = T
-    ret = SCT_seabird(fn, ret)
+    ret = SCT_minilog(fn, ret, uid, lat, lon, depth)
   }#End minilog handler
 
   #Check if this is cts data
   if (grepl("CTS", fn)) {
     known = T
-    ret = SCT_cts(fn, ret, subset)
+    ret = SCT_cts(fn, ret, subset, uid, lat, lon, depth)
   } #End cts handler
 
   #Check if this is a seabird logger
   if (any(grepl("Sea-Bird", header))) {
     known = T
-    ret = SCT_seabird(fn, ret)
+    ret = SCT_seabird(fn, ret, uid, lat, lon, depth)
   } #End Seabird handler
 
   #Check if this is a hobo logger
   if (any(grepl("Water Detect,Host Connect,Button Down", header))) {
     known = T
-    ret = SCT_hobo(fn, ret)
+    ret = SCT_hobo(fn, ret, uid, lat, lon, depth)
   }#End hobo handler
 
   #Check to see if we can load even with no known types

@@ -3,10 +3,14 @@
 #' @param fn The data to process
 #' @param ret List of already procesed SCHEADER data
 #' @param subset Subset the file by serial number. Cts Data is one big file
+#' @param uid Pass determined uid
+#' @param lat Pass determined lat
+#' @param lon Pass determined lon
+#' @param depth Pass determined depth
 #' @import lubridate
 #' @return List of formatted data
 #' @export
-SCT_cts = function(fn, ret, subset){
+SCT_cts = function(fn, ret, subset, uid, lat, lon, depth){
   data = read.csv(fn)
   data = data[which(data$Serial_number == subset),]
   ret$Observed_Depth = unique(data$Log.Depth.m.)
