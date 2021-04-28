@@ -518,12 +518,12 @@ click.temp = function(da = NA,
   }
 }
   again = F
-  res2 <- tkmessageBox(
-     title = "ManualTD",
-     message = "Are there more bottom profiles in this plot that need to be added?",
-     icon = "info",
-     type = "yesno")
-
+ # res2 <- tkmessageBox(
+ #    title = "ManualTD",
+ #    message = "Are there more bottom profiles in this plot that need to be added?",
+ #    icon = "info",
+ #    type = "yesno")
+res2="no"
   if (grepl("yes", res2)) {
      again = T
   }
