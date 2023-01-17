@@ -614,7 +614,7 @@ standardize.temp = function(fn,
   ret$Location = NA
 
   known = F
-  header = readLines(fn, n = 50)
+  header = readLines(fn, n = 80)
   if (any(grepl("<SCHEADER>", header)) &&
       any(grepl("</SCHEADER>", header))) {
     header = header[-(grep("<SCHEADER>", header):grep("</SCHEADER>", header))]
@@ -642,6 +642,11 @@ standardize.temp = function(fn,
   if (any(grepl("Water Detect,Host Connect,Button Down", header))) {
     known = T
     ret = SCT_hobo(fn, ret, uid, lat, lon, depth)
+  }
+
+  if (any(grepl(make.names("#,Date-Time (ADT),Ch: 1 - Temperature   (°C )"), make.names(header)))) {
+    known = T
+    ret = SCT_hobo2(fn, ret, uid, lat, lon, depth)
   }#End hobo handler
 
   #Check to see if we can load even with no known types
