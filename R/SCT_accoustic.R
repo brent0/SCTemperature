@@ -33,7 +33,7 @@ acoustic_file_handler = function(data, fn){
   if(gf == "%Y-%m-%d %H:%M:%S") data$deploy_date = ymd_hms(data$deploy_date)
   if(gf == "%Y-%m-%d %H:%M") data$deploy_date = ymd_hm(data$deploy_date)
   if(gf == "%d/%m/%Y %H:%M") data$deploy_date = dmy_hm(data$deploy_date)
-
+  if(gf == "%Y-%m-%d %H:%M:%OS") data$deploy_date = ymd_hms(data$deploy_date)
   #handle the case where not haul date provided
   if (!any(as.character(data$recover_date) != "") || all(is.na(data$recover_date))) {
     warning("No recover date provided")
@@ -55,6 +55,7 @@ acoustic_file_handler = function(data, fn){
     if(gf == "%Y-%m-%d %H:%M:%S") data$recover_date = ymd_hms(data$recover_date)
     if(gf == "%Y-%m-%d %H:%M") data$recover_date = ymd_hm(data$recover_date)
     if(gf == "%d/%m/%Y %H:%M") data$recover_date = dmy_hm(data$recover_date)
+    if(gf == "%Y-%m-%d %H:%M:%OS") data$recover_date = ymd_hms(data$recover_date)
   }
 
   data = data[order(data$date), ]
@@ -101,15 +102,27 @@ acoustic_file_handler = function(data, fn){
         loc = "South of Halifax"
         pro = "OTN Halifax"
       }
-
+      if (grepl("HFX", as.character(md_sub$station_name[1]))) {
+        loc = "South of Halifax"
+        pro = "OTN Halifax"
+      }
+      if (grepl("hfx", as.character(md_sub$project[1]))) {
+        loc = "South of Halifax"
+        pro = "OTN Halifax"
+      }
+      if (grepl("cbs", as.character(md_sub$project[1]))) {
+        loc = "Cabot Strait"
+        pro = "OTN Cabot Strait"
+      }
+      if (grepl("sabmpa", as.character(md_sub$project[1]))) {
+        loc = "SABMPA"
+        pro = "SABMPA"
+      }
       if (grepl("V2LSCF", as.character(md_sub$catalognumber[1]))) {
         loc = "SABMPA"
         pro = "V2LSCF"
       }
-      if(grepl("V2LSCF", fn) ){
-        loc = "SABMPA"
-        pro = "V2LSCF"
-      }
+
       if(as.character(mm_sub$station_name[1]) == "N117"){
         print(md_sub)
       }
@@ -120,16 +133,16 @@ acoustic_file_handler = function(data, fn){
       rate = unlist(strsplit(rate, " "))
       rate = gsub("[^0-9.-]", "", rate)
       rate = paste(rate[1], rate[2], rate[3], sep = ":")
-      units = NA
+      units = "Celsius"
 
-      if (any(grepl("°F", md_sub$units))) {
+      if (any(grepl("deg_f", md_sub$description))) {
         md_sub$data = ((as.numeric(as.character(
           md_sub$data
         )) - 32) * 5) / 9
         units = "Celsius"
 
       }
-      if (any(grepl("°C", md_sub$units)))
+      if (any(grepl("deg_c", md_sub$description)))
         units = "Celsius"
 
       hauldate = md_sub$recover_date

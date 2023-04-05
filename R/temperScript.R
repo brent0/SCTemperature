@@ -140,13 +140,14 @@ Populate = function(fn = NA, test = T) {
         manualmeta = read.csv(fl[i], stringsAsFactors = F)
         #Verify if we are dealing with receiver data
         if (all(
+
           names(manualmeta) == c(
+            "project",
             "station_name",
             "date",
             "receiver",
-            "description",
             "data",
-            "units",
+            "description",
             "rcv_serial_no",
             "deploy_date",
             "recover_date",
