@@ -10,6 +10,20 @@ acoustic_file_handler = function(data, fn){
   #handle date formatting issues here first
   gf = guess_formats(data$date, c("mdy", "dmy", "ymd"))
   gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
+  if(is.null(gf)){
+    gf = guess_formats(data$date,  c("mdy_HM", "mdy_HMS","dmy_HMS", "dmy_HM", "ymd_HMS", "ymd_HM"))
+    gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
+    if(gf == "%m-%d-%Y %H:%M") data$date = mdy_hm(data$date)
+    if(gf == "%m/%d/%Y %H:%M") data$date = mdy_hm(data$date)
+    if(gf == "%m-%d-%Y %H:%M:%S") data$date = mdy_hms(data$date)
+    if(gf == "%d-%m-%Y %H:%M:%S") data$date = dmy_hms(data$date)
+    if(gf == "%d-%m-%Y %H:%M") data$date = dmy_hm(data$date)
+    if(gf == "%Y-%m-%d %H:%M:%S") data$date = ymd_hms(data$date)
+    if(gf == "%Y-%m-%d %H:%M") data$date = ymd_hm(data$date)
+    if(gf == "%d/%m/%Y %H:%M") data$date = dmy_hm(data$date)
+    if(gf == "%Y-%m-%d %H:%M:%OS") data$date = ymd_hms(data$date)
+
+  }else{
   if(gf == "%m-%d-%Y") data$date = mdy(data$date)
   if(gf == "%m/%d/%Y") data$date = mdy(data$date)
   if(gf == "%d-%m-%Y") data$date = dmy(data$date)
@@ -17,7 +31,7 @@ acoustic_file_handler = function(data, fn){
   if(gf == "%Y-%m-%d") data$date = ymd(data$date)
 
   data$date = data$date + hms("12:00:00")
-
+  }
   gf = guess_formats(data$deploy_date,  c("mdy", "dmy", "ymd", "mdy_HM", "mdy_HMS","dmy_HMS", "dmy_HM", "ymd_HMS", "ymd_HM"))
   gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
 
@@ -114,7 +128,7 @@ acoustic_file_handler = function(data, fn){
         loc = "Cabot Strait"
         pro = "OTN Cabot Strait"
       }
-      if (grepl("sabmpa", as.character(md_sub$project[1]))) {
+      if (grepl("sabmpa", tolower(as.character(md_sub$project[1])))) {
         loc = "SABMPA"
         pro = "SABMPA"
       }
@@ -222,11 +236,13 @@ acoustic_file_handler = function(data, fn){
 
       }
       else{
+
         print("Not Enough DATA")
         next()
       }
 
       if (nrow(basedat) < 1) {
+
         print("Not Enough DATA")
         next()
 

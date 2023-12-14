@@ -142,6 +142,27 @@ Populate = function(fn = NA, test = T) {
         if (all(
 
           names(manualmeta) == c(
+            "otn_array",
+            "station_name",
+            "date",
+            "receiver",
+            "data",
+            "description",
+            "rcv_serial_no",
+            "deploy_date",
+            "recover_date",
+            "recover_ind",
+            "dep_lat",
+            "dep_long",
+            "the_geom",
+            "catalognumber"
+          )
+        )) {
+          names(manualmeta)[which(names(manualmeta) == "otn_array")] = "project"
+        }
+        if (all(
+
+          names(manualmeta) == c(
             "project",
             "station_name",
             "date",
