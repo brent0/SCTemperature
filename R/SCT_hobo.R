@@ -153,6 +153,16 @@ SCT_hobo = function(fn, ret, uid, lat, lon, depth){
 SCT_hobo2 = function(fn, ret, uid, lat, lon, depth){
 
   ind = grep(make.names("#,Date-Time (ADT),Ch: 1 - Temperature   (°C )"), make.names(readLines(fn, n = 100)), ignore.case = TRUE)
+  if(length(ind)==0){
+    ind = grep(make.names("X..Date.Time..ADT..Ch.1...Temperature.....C.."), make.names(readLines(fn, n = 100)), ignore.case = TRUE)
+  }
+  if(length(ind)==0){
+    ind = grep(make.names("X..Date.Time..AST..Ch..1...Temperature.....F..."), make.names(readLines(fn, n = 100)), ignore.case = TRUE)
+
+  }
+  if(length(ind)==0){
+    ind = grep(make.names("#,Date-Time (AST/ADT),Ch: 1 - Temperature   (°C),"), make.names(readLines(fn, n = 100)), ignore.case = TRUE)
+  }
   header = readLines(fn, n = ind)
   if (any(grepl("<SCHEADER>", header)) &&
       any(grepl("</SCHEADER>", header))) {
@@ -184,6 +194,9 @@ SCT_hobo2 = function(fn, ret, uid, lat, lon, depth){
   #   tzstr = paste(zone, offset, sep="+")
   # }
   if(zone == "ADT"){
+    tzstr = "Canada/Atlantic"
+  }
+  if(zone == "AST"){
     tzstr = "Canada/Atlantic"
   }
   dtc = mdy_hms(dtc)
