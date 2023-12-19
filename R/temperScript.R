@@ -41,7 +41,6 @@ regenStationInventory  = function() {
 #' @return TRUE on success
 #' @export
 Populate = function(fn = NA, test = T) {
-
   assign('con', NULL, pkg.env)
   assign('M_UID', NULL, pkg.env)
   assign('T_UID', NULL, pkg.env)
@@ -131,7 +130,8 @@ Populate = function(fn = NA, test = T) {
     if (!fl[i] %in% FILE_S) {
       print(fl[i])
 
-      head = readLines(fl[i], n = 50)
+      head = readLines(fl[i], n = 50, encoding="ANSI")
+
 
       ind = grep("<SCHEADER>", head)
       ind2 = grep("</SCHEADER>", head)
@@ -638,7 +638,7 @@ standardize.temp = function(fn,
   ret$Location = NA
 
   known = F
-  header = readLines(fn, n = 80)
+  header = readLines(fn, n = 80, encoding="ANSI")
   if (any(grepl("<SCHEADER>", header)) &&
       any(grepl("</SCHEADER>", header))) {
     header = header[-(grep("<SCHEADER>", header):grep("</SCHEADER>", header))]
@@ -854,7 +854,7 @@ if(nrow(hw) >0){
     )
 
     download.file(url, "test.csv")
-    header = readLines("test.csv", n = 50)
+    header = readLines("test.csv", n = 50, encoding="ANSI")
     ind = grep("Date/Time", header)
     dx = read.csv("test.csv", skip = ind - 1)
     alldx = rbind(alldx, dx)
