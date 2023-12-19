@@ -41,6 +41,7 @@ regenStationInventory  = function() {
 #' @return TRUE on success
 #' @export
 Populate = function(fn = NA, test = T) {
+
   assign('con', NULL, pkg.env)
   assign('M_UID', NULL, pkg.env)
   assign('T_UID', NULL, pkg.env)
