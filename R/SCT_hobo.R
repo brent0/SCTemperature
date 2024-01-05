@@ -11,8 +11,8 @@
 #' @export
 SCT_hobo = function(fn, ret, uid, lat, lon, depth){
 
-  ind = grep("Water Detect,Host Connect,Button Down", readLines(fn, n = 100, encoding="ANSI"), ignore.case = TRUE)
-  header = readLines(fn, n = ind, encoding="ANSI")
+  ind = grep("Water Detect,Host Connect,Button Down", readLines(fn, n = 100), ignore.case = TRUE)
+  header = readLines(fn, n = ind)
   if (any(grepl("<SCHEADER>", header)) &&
       any(grepl("</SCHEADER>", header))) {
     header = header[-(grep("<SCHEADER>", header):grep("</SCHEADER>", header))]
@@ -152,18 +152,18 @@ SCT_hobo = function(fn, ret, uid, lat, lon, depth){
 #' @export
 SCT_hobo2 = function(fn, ret, uid, lat, lon, depth){
 
-  ind = grep(make.names("#,Date-Time (ADT),Ch: 1 - Temperature   (°C )"), make.names(readLines(fn, n = 100, encoding="ANSI")), ignore.case = TRUE)
+  ind = grep(make.names("#,Date-Time (ADT),Ch: 1 - Temperature   (°C )"), make.names(readLines(fn, n = 100)), ignore.case = TRUE)
   if(length(ind)==0){
-    ind = grep(make.names("X..Date.Time..ADT..Ch.1...Temperature.....C.."), make.names(readLines(fn, n = 100, encoding="ANSI")), ignore.case = TRUE)
+    ind = grep(make.names("X..Date.Time..ADT..Ch.1...Temperature.....C.."), make.names(readLines(fn, n = 100)), ignore.case = TRUE)
   }
   if(length(ind)==0){
-    ind = grep(make.names("X..Date.Time..AST..Ch..1...Temperature.....F..."), make.names(readLines(fn, n = 100, encoding="ANSI")), ignore.case = TRUE)
+    ind = grep(make.names("X..Date.Time..AST..Ch..1...Temperature.....F..."), make.names(readLines(fn, n = 100)), ignore.case = TRUE)
 
   }
   if(length(ind)==0){
-    ind = grep(make.names("#,Date-Time (AST/ADT),Ch: 1 - Temperature   (°C),"), make.names(readLines(fn, n = 100, encoding="ANSI")), ignore.case = TRUE)
+    ind = grep(make.names("#,Date-Time (AST/ADT),Ch: 1 - Temperature   (°C),"), make.names(readLines(fn, n = 100)), ignore.case = TRUE)
   }
-  header = readLines(fn, n = ind, encoding="UTF-8")
+  header = readLines(fn, n = ind)
   if (any(grepl("<SCHEADER>", header)) &&
       any(grepl("</SCHEADER>", header))) {
     header = header[-(grep("<SCHEADER>", header):grep("</SCHEADER>", header))]

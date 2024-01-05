@@ -130,7 +130,7 @@ Populate = function(fn = NA, test = T) {
     if (!fl[i] %in% FILE_S) {
       print(fl[i])
 
-      head = readLines(fl[i], n = 50, encoding="ANSI")
+      head = readLines(fl[i], n = 50)
 
 
       ind = grep("<SCHEADER>", head)
@@ -257,7 +257,7 @@ Populate = function(fn = NA, test = T) {
             )
           ), ","))
 
-        if (!is.na(DEPTH)) {
+        if (!is.na(DEPTH)[1]) {
           if (tolower(DEPTHUNITS) == "fathoms")
             DEPTH = as.character(as.numeric(DEPTH) * 1.8288)
           if (tolower(DEPTHUNITS) == "feet")
@@ -638,7 +638,8 @@ standardize.temp = function(fn,
   ret$Location = NA
 
   known = F
-  header = readLines(fn, n = 80, encoding="ANSI")
+
+  header = readLines(fn, n = 80)
   if (any(grepl("<SCHEADER>", header)) &&
       any(grepl("</SCHEADER>", header))) {
     header = header[-(grep("<SCHEADER>", header):grep("</SCHEADER>", header))]
@@ -854,7 +855,7 @@ if(nrow(hw) >0){
     )
 
     download.file(url, "test.csv")
-    header = readLines("test.csv", n = 50, encoding="ANSI")
+    header = readLines("test.csv", n = 50)
     ind = grep("Date/Time", header)
     dx = read.csv("test.csv", skip = ind - 1)
     alldx = rbind(alldx, dx)
