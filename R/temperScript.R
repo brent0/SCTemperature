@@ -224,6 +224,7 @@ Populate = function(fn = NA, test = T) {
               regexpr("</LON>", head)[1] - 1
             )
           ), ","))
+
         if (grepl("<STARTDATE>",  head))
           SDATE = unlist(strsplit(trimws(
             substr(
@@ -339,6 +340,32 @@ Populate = function(fn = NA, test = T) {
           #GlobDep <<- DEPTH
           assign('GlobDep', DEPTH, pkg.env)
 
+          gf = guess_formats(trimws(SDATE),  c("mdy_HM", "mdy_HMS","dmy_HMS", "dmy_HM", "ymd_HMS", "ymd_HM"))
+          gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
+          if(gf == "%m-%d-%Y %H:%M") SDATE = mdy_hm(SDATE, tz = DTZ)
+          if(gf == "%m/%d/%Y %H:%M") SDATE = mdy_hm(SDATE, tz = DTZ)
+          if(gf == "%m-%d-%Y %H:%M:%S") SDATE = mdy_hms(SDATE, tz = DTZ)
+          if(gf == "%d-%m-%Y %H:%M:%S") SDATE = dmy_hms(SDATE, tz = DTZ)
+          if(gf == "%d-%m-%Y %H:%M") SDATE = dmy_hm(SDATE, tz = DTZ)
+          if(gf == "%Y-%m-%d %H:%M:%S") SDATE = ymd_hms(SDATE, tz = DTZ)
+          if(gf == "%Y-%m-%d %H:%M") SDATE = ymd_hm(SDATE, tz = DTZ)
+          if(gf == "%d/%m/%Y %H:%M") SDATE = dmy_hm(SDATE, tz = DTZ)
+          if(gf == "%Y-%m-%d %H:%M:%OS") SDATE = ymd_hms(SDATE, tz = DTZ)
+          if(gf == "%m/%d/%YT%H:%M:%S") SDATE = mdy_hms(SDATE, tz = DTZ)
+          SDATE = format(SDATE, "%d/%m/%YT%H:%M:%S")
+          gf = guess_formats(trimws(EDATE),  c("mdy_HM", "mdy_HMS","dmy_HMS", "dmy_HM", "ymd_HMS", "ymd_HM"))
+          gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
+          if(gf == "%m-%d-%Y %H:%M") EDATE = mdy_hm(EDATE, tz = DTZ)
+          if(gf == "%m/%d/%Y %H:%M") EDATE = mdy_hm(EDATE, tz = DTZ)
+          if(gf == "%m-%d-%Y %H:%M:%S") EDATE = mdy_hms(EDATE, tz = DTZ)
+          if(gf == "%d-%m-%Y %H:%M:%S") EDATE = dmy_hms(EDATE, tz = DTZ)
+          if(gf == "%d-%m-%Y %H:%M") EDATE = dmy_hm(EDATE, tz = DTZ)
+          if(gf == "%Y-%m-%d %H:%M:%S") EDATE = ymd_hms(EDATE, tz = DTZ)
+          if(gf == "%Y-%m-%d %H:%M") EDATE = ymd_hm(EDATE, tz = DTZ)
+          if(gf == "%d/%m/%Y %H:%M") EDATE = dmy_hm(EDATE, tz = DTZ)
+          if(gf == "%Y-%m-%d %H:%M:%OS") EDATE = ymd_hms(EDATE, tz = DTZ)
+          if(gf == "%m/%d/%YT%H:%M:%S") EDATE = mdy_hms(EDATE, tz = DTZ)
+          EDATE = format(EDATE, "%d/%m/%YT%H:%M:%S")
           for (j in 1:length(SDATE)) {
             AddTempMetadata(
               PID = xx,
@@ -360,6 +387,7 @@ Populate = function(fn = NA, test = T) {
               Notes = NOTES,
               HaulDate_Start =  lubridate::dmy_hms(SDATE[j], tz = DTZ),
               HaulDate_End =  lubridate::dmy_hms(EDATE[j], tz = DTZ)
+
             )
 
           }
@@ -396,7 +424,7 @@ click.temp = function(da = NA,
   #Set up plot range
   if(!is.null(af)){
 
-  if ((nrow(af) / nrow(da)) < .05) {
+  if ((nrow(af) / nrow(da)) < .5) {
     sdate = af$T_DATE[1] - days(5)
     edate = af$T_DATE[length(af$T_DATE)] + days(5)
     if (sdate > da$T_DATE[1])
@@ -690,7 +718,6 @@ if (any(grepl(make.names("X..Date.Time..ADT..Ch.1...Temperature.....C.."), make.
     known = T
     ret = SCT_hobo2(fn, ret, uid, lat, lon, depth)
   }
-
 
 
   #End hobo handler

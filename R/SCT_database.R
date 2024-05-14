@@ -49,7 +49,6 @@ AddTempMetadata = function(PID = NULL,
 
   ROracle::dbDisconnect(con2)
 
-
   dx = data.frame(
     as.character(UID),
     as.character(PID),
@@ -250,6 +249,7 @@ AddTempRawdata = function(fn = NULL,
         HaulDate_End = NULL
 
       if (!is.null(HaulDate_End)) {
+
         madat = trim_to_dates(sta_cont$data, HaulDate_Start,	HaulDate_End, TRUE)
         if (nrow(madat) == 0) {
           madat = auto_filter(
