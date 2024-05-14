@@ -161,8 +161,12 @@ SCT_hobo2 = function(fn, ret, uid, lat, lon, depth){
 
   }
   if(length(ind)==0){
+    ind = grep(make.names("X..Date.Time..AST.ADT..Ch..1...Temperature.....C."), make.names(readLines(fn, n = 100)), ignore.case = TRUE)
+  }
+  if(length(ind)==0){
     ind = grep(make.names("#,Date-Time (AST/ADT),Ch: 1 - Temperature   (°C),"), make.names(readLines(fn, n = 100)), ignore.case = TRUE)
   }
+
   header = readLines(fn, n = ind)
   if (any(grepl("<SCHEADER>", header)) &&
       any(grepl("</SCHEADER>", header))) {

@@ -685,7 +685,15 @@ standardize.temp = function(fn,
 if (any(grepl(make.names("X..Date.Time..ADT..Ch.1...Temperature.....C.."), make.names(header)))) {
   known = T
   ret = SCT_hobo2(fn, ret, uid, lat, lon, depth)
-}#End hobo handler
+}
+  if (any(grepl(make.names("X..Date.Time..AST.ADT..Ch..1...Temperature.....C."), make.names(header)))) {
+    known = T
+    ret = SCT_hobo2(fn, ret, uid, lat, lon, depth)
+  }
+
+
+
+  #End hobo handler
     #Check to see if we can load even with no known types
   header = gsub("Temp", "Temperature", header)
   if (any(grepl("Date", header[1])) &
