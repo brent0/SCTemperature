@@ -181,7 +181,6 @@ AddTempRawdata = function(fn = NULL,
 
   }
   ROracle::dbDisconnect(con4)
-
   if (!file.exists(fn)) {
     allfilelist = list.files(path = raw.dir,
                              full.names = T,

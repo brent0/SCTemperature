@@ -352,7 +352,9 @@ Populate = function(fn = NA, test = T) {
           if(gf == "%d/%m/%Y %H:%M") SDATE = dmy_hm(SDATE, tz = DTZ)
           if(gf == "%Y-%m-%d %H:%M:%OS") SDATE = ymd_hms(SDATE, tz = DTZ)
           if(gf == "%m/%d/%YT%H:%M:%S") SDATE = mdy_hms(SDATE, tz = DTZ)
+          if(gf == "%d/%m/%YT%H:%M:%S") SDATE = dmy_hms(SDATE, tz = DTZ)
           SDATE = format(SDATE, "%d/%m/%YT%H:%M:%S")
+
           gf = guess_formats(trimws(EDATE),  c("mdy_HM", "mdy_HMS","dmy_HMS", "dmy_HM", "ymd_HMS", "ymd_HM"))
           gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
           if(gf == "%m-%d-%Y %H:%M") EDATE = mdy_hm(EDATE, tz = DTZ)
@@ -365,8 +367,10 @@ Populate = function(fn = NA, test = T) {
           if(gf == "%d/%m/%Y %H:%M") EDATE = dmy_hm(EDATE, tz = DTZ)
           if(gf == "%Y-%m-%d %H:%M:%OS") EDATE = ymd_hms(EDATE, tz = DTZ)
           if(gf == "%m/%d/%YT%H:%M:%S") EDATE = mdy_hms(EDATE, tz = DTZ)
+          if(gf == "%d/%m/%YT%H:%M:%S") EDATE = dmy_hms(EDATE, tz = DTZ)
           EDATE = format(EDATE, "%d/%m/%YT%H:%M:%S")
           for (j in 1:length(SDATE)) {
+
             AddTempMetadata(
               PID = xx,
               UID = paste(xx, j, sep = "-"),
@@ -470,7 +474,7 @@ click.temp = function(da = NA,
       af$TEMP,
       axes = F,
       type = "p",
-      col = "red",
+      col = "orange",
       lwd = 1
     )
     }
@@ -486,23 +490,24 @@ click.temp = function(da = NA,
       lwd = 1
     )
     }
-    if(!is.null(af)){
-    points(af$T_DATE[1], af$TEMP[1], pch = 3, col = "red")
-    points(af$T_DATE[length(af$T_DATE)], af$TEMP[length(af$TEMP)], pch = 3, col = "red")
-}
-
     if(!is.null(da$INWATER)){
 
       par(new = TRUE)
-      col = rep("red",nrow(da))
-      col[which(da$INWATER == 1)] = "green"
+      col = rep("yellow",nrow(da))
+      col[which(da$INWATER == 1)] = "lightgreen"
       plot(da$T_DATE, da$INWATER, type = "p", xaxt = "n", col = col, yaxt = "n",
            ylab = "", xlab = "", ylim = c(0,1))
       par(new = TRUE)
          legend("topright", legend=c("In Water", "Out Water"),
-             col=c("green", "red"), pch = c(1, 1), cex=0.8)
+             col=c("lightgreen", "yellow"), pch = c(1, 1), cex=0.8)
       }
+    if(!is.null(af)){
+      points(af$T_DATE[1], af$TEMP[1], pch = 3, col = "green")
+      points(af$T_DATE[length(af$T_DATE)], af$TEMP[length(af$TEMP)], pch = 3, col = "red")
+      points(af$T_DATE[1], af$TEMP[1], pch = 1, col = "green")
+      points(af$T_DATE[length(af$T_DATE)], af$TEMP[length(af$TEMP)], pch = 1, col = "red")
 
+        }
     xy <- xy.coords(da$T_DATE, da$TEMP)
     x <- xy$x
     y <- xy$y
