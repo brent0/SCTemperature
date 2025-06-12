@@ -79,7 +79,7 @@ Populate = function(fn = NA, test = T) {
     include.dirs = FALSE
   )
   fl = fl[which(!grepl("ReceiverPlots", fl))]
-
+  fl = fl[which(!grepl("Thumbs", fl))]
 
   #### Get list of data already added to database ####
   con8 <<-
@@ -722,10 +722,15 @@ if (any(grepl(make.names("X..Date.Time..ADT..Ch.1...Temperature.....C.."), make.
   if (any(grepl(make.names("X..Date.Time..AST.ADT..Ch..1...Temperature.....C."), make.names(header)))) {
     known = T
     ret = SCT_hobo2(fn, ret, uid, lat, lon, depth)
-  }
+  }  #End hobo handler
+
+  if (any(grepl(make.names("Date & Time,Temp(°C),Depth(m)"), make.names(header)))) {
+    known = T
+    ret = SCT_staroddi(fn, ret, uid, lat, lon, depth)
+  }   #End staroddi
 
 
-  #End hobo handler
+
     #Check to see if we can load even with no known types
   header = gsub("Temp", "Temperature", header)
   if (any(grepl("Date", header[1])) &

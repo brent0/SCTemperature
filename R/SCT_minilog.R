@@ -14,6 +14,9 @@ SCT_minilog = function(fn, ret, uid, lat, lon, depth){
 miniold = F
 
 ind = grep("Date\\(", readLines(fn, n = 50), ignore.case = TRUE)
+if(length(ind)==0){
+ # ind = grep("Date(", readLines(fn, n = 50), ignore.case = TRUE)
+}
 header = readLines(fn, n = ind)
 if (any(grepl("<SCHEADER>", header)) &&
     any(grepl("</SCHEADER>", header))) {
