@@ -743,6 +743,7 @@ if (any(grepl(make.names("X..Date.Time..ADT..Ch.1...Temperature.....C.."), make.
 
     type = "noheader"
     header = header[1]
+    browser()
     data = read.csv(fn)
     if (ncol(data) == 1)
       data =  read.delim(fn)
