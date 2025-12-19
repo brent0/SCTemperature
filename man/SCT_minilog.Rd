@@ -4,16 +4,24 @@
 \alias{SCT_minilog}
 \title{SCT_minilog}
 \usage{
-SCT_minilog(fn, ret)
+SCT_minilog(fn, ret, uid, lat, lon, depth)
 }
 \arguments{
 \item{fn}{The data to process}
 
 \item{ret}{List of already procesed SCHEADER data}
+
+\item{uid}{Pass determined uid}
+
+\item{lat}{Pass determined lat}
+
+\item{lon}{Pass determined lon}
+
+\item{depth}{Pass determined depth}
 }
 \value{
 List of formatted data
 }
 \description{
-Function that standardizes seabird formatted files
+Function that standardizes minilog formatted files
 }

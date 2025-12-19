@@ -128,6 +128,12 @@ Populate = function(fn = NA, test = T) {
   for (i in 1:length(fl)) {
     #Only look at files that havent yet been added
     if (!fl[i] %in% FILE_S) {
+      encodings <- guess_encoding(fl[i], n_max = 1000)
+      if(encodings$encoding[1] != "UTF-8"){
+        writeLines(iconv(readLines(fl[i]), from = encodings$encoding[1], to = "UTF8"),
+                   file(fl[i], encoding="UTF-8"))
+        }
+
       print(fl[i])
 
       head = readLines(fl[i], n = 50)
@@ -140,7 +146,30 @@ Populate = function(fn = NA, test = T) {
         #If not we will attempt to process based on known formats (so far receiver data)
         manualmeta = read.csv(fl[i], stringsAsFactors = F)
         #Verify if we are dealing with receiver data
+
         if (all(
+
+          names(manualmeta) == c(
+            "otn_array",
+            "station_name",
+            "date",
+            "receiver",
+            "temperature",
+            "description",
+            "rcv_serial_no",
+            "deploy_date",
+            "recover_date",
+            "recover_ind",
+            "dep_lat",
+            "dep_long",
+            "the_geom",
+            "catalognumber"
+          )
+        )) {
+          names(manualmeta)[which(names(manualmeta) == "otn_array")] = "project"
+          names(manualmeta)[which(names(manualmeta) == "temperature")] = "data"
+        }
+         if (all(
 
           names(manualmeta) == c(
             "otn_array",
@@ -164,6 +193,29 @@ Populate = function(fn = NA, test = T) {
         if (all(
 
           names(manualmeta) == c(
+            "station_name",
+            "date",
+            "receiver",
+            "description",
+            "data",
+            "units",
+            "rcv_serial_no",
+            "deploy_date",
+            "recover_date",
+            "recover_ind",
+            "dep_lat",
+            "dep_long",
+            "the_geom",
+            "catalognumber"
+          )
+        )) {
+          if(manualmeta$station_name[1] == "N101")manualmeta$project = "SABMPA"
+           manualmeta$units = NULL
+        }
+
+        if (all(
+
+          names(manualmeta) %in% c(
             "project",
             "station_name",
             "date",
@@ -179,13 +231,30 @@ Populate = function(fn = NA, test = T) {
             "the_geom",
             "catalognumber"
           )
-        )) {
+        )){
+
+          if(is.null(manualmeta$project) && grepl("v2lscf", fl[i])){
+            manualmeta$project = NA
+            manualmeta$project = "v2lscf"
+          }
+          if(is.null(manualmeta$project) && grepl("HFX", fl[i])){
+            manualmeta$project = NA
+            manualmeta$project = "OTN Halifax"
+          }
+          if(is.null(manualmeta$project) && grepl("CBS", fl[i])){
+            manualmeta$project = NA
+            manualmeta$project = "OTN Cabot Strait"
+          }
           acoustic_file_handler(data = manualmeta, fl[i])
         }
+
+
+
         #Add other known non-header files here.
         # if(match some known file characteristics){}
         else{
-          print("Unknown format")
+          print("Unknown format:")
+          print(fl[i])
         }
 
       }
@@ -817,7 +886,6 @@ if (any(grepl(make.names("X..Date.Time..ADT..Ch.1...Temperature.....C.."), make.
   return(ret)
 }
 
-
 #' @title trim_to_dates
 #' @description  Internal function. Simply trim data to specified dates
 #' @param data The data to subset
@@ -1106,10 +1174,6 @@ if(nrow(hw) >0){
     return(NULL)
   }
 }
-
-
-
-
 
 #' @title decibar2depth
 #' @description  Internal function. This function calculates depth in meters from pressure in decibars using Saunders and Fofonoff's method

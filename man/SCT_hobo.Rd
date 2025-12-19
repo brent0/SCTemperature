@@ -4,12 +4,20 @@
 \alias{SCT_hobo}
 \title{SCT_hobo}
 \usage{
-SCT_hobo(fn, ret)
+SCT_hobo(fn, ret, uid, lat, lon, depth)
 }
 \arguments{
 \item{fn}{The data to process}
 
 \item{ret}{List of already procesed SCHEADER data}
+
+\item{uid}{Pass determined uid}
+
+\item{lat}{Pass determined lat}
+
+\item{lon}{Pass determined lon}
+
+\item{depth}{Pass determined depth}
 }
 \value{
 List of formatted data

@@ -4,7 +4,7 @@
 \alias{SCT_cts}
 \title{SCT_cts}
 \usage{
-SCT_cts(fn, ret, subset)
+SCT_cts(fn, ret, subset, uid, lat, lon, depth)
 }
 \arguments{
 \item{fn}{The data to process}
@@ -12,6 +12,14 @@ SCT_cts(fn, ret, subset)
 \item{ret}{List of already procesed SCHEADER data}
 
 \item{subset}{Subset the file by serial number. Cts Data is one big file}
+
+\item{uid}{Pass determined uid}
+
+\item{lat}{Pass determined lat}
+
+\item{lon}{Pass determined lon}
+
+\item{depth}{Pass determined depth}
 }
 \value{
 List of formatted data

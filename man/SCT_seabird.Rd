@@ -4,12 +4,20 @@
 \alias{SCT_seabird}
 \title{SCT_seabird}
 \usage{
-SCT_seabird(fn, ret)
+SCT_seabird(fn, ret, uid, lat, lon, depth)
 }
 \arguments{
 \item{fn}{The data to process}
 
 \item{ret}{List of already procesed SCHEADER data}
+
+\item{uid}{Pass determined uid}
+
+\item{lat}{Pass determined lat}
+
+\item{lon}{Pass determined lon}
+
+\item{depth}{Pass determined depth}
 }
 \value{
 List of formatted data

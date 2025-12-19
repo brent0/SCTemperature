@@ -13,41 +13,41 @@ acoustic_file_handler = function(data, fn){
   if(is.null(gf)){
     gf = guess_formats(data$date,  c("mdy_HM", "mdy_HMS","dmy_HMS", "dmy_HM", "ymd_HMS", "ymd_HM"))
     gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
-    if(gf == "%m-%d-%Y %H:%M") data$date = mdy_hm(data$date)
-    if(gf == "%m/%d/%Y %H:%M") data$date = mdy_hm(data$date)
-    if(gf == "%m-%d-%Y %H:%M:%S") data$date = mdy_hms(data$date)
-    if(gf == "%d-%m-%Y %H:%M:%S") data$date = dmy_hms(data$date)
-    if(gf == "%d-%m-%Y %H:%M") data$date = dmy_hm(data$date)
-    if(gf == "%Y-%m-%d %H:%M:%S") data$date = ymd_hms(data$date)
-    if(gf == "%Y-%m-%d %H:%M") data$date = ymd_hm(data$date)
-    if(gf == "%d/%m/%Y %H:%M") data$date = dmy_hm(data$date)
-    if(gf == "%Y-%m-%d %H:%M:%OS") data$date = ymd_hms(data$date)
+    if(gf == "%m-%d-%Y %H:%M") data$date = mdy_hm(data$date, tz = "UTC")
+    if(gf == "%m/%d/%Y %H:%M") data$date = mdy_hm(data$date, tz = "UTC")
+    if(gf == "%m-%d-%Y %H:%M:%S") data$date = mdy_hms(data$date, tz = "UTC")
+    if(gf == "%d-%m-%Y %H:%M:%S") data$date = dmy_hms(data$date, tz = "UTC")
+    if(gf == "%d-%m-%Y %H:%M") data$date = dmy_hm(data$date, tz = "UTC")
+    if(gf == "%Y-%m-%d %H:%M:%S") data$date = ymd_hms(data$date, tz = "UTC")
+    if(gf == "%Y-%m-%d %H:%M") data$date = ymd_hm(data$date, tz = "UTC")
+    if(gf == "%d/%m/%Y %H:%M") data$date = dmy_hm(data$date, tz = "UTC")
+    if(gf == "%Y-%m-%d %H:%M:%OS") data$date = ymd_hms(data$date, tz = "UTC")
 
   }else{
-  if(gf == "%m-%d-%Y") data$date = mdy(data$date)
-  if(gf == "%m/%d/%Y") data$date = mdy(data$date)
-  if(gf == "%d-%m-%Y") data$date = dmy(data$date)
-  if(gf == "%d/%m/%Y") data$date = dmy(data$date)
-  if(gf == "%Y-%m-%d") data$date = ymd(data$date)
+  if(gf == "%m-%d-%Y") data$date = mdy(data$date, tz = "UTC")
+  if(gf == "%m/%d/%Y") data$date = mdy(data$date, tz = "UTC")
+  if(gf == "%d-%m-%Y") data$date = dmy(data$date, tz = "UTC")
+  if(gf == "%d/%m/%Y") data$date = dmy(data$date, tz = "UTC")
+  if(gf == "%Y-%m-%d") data$date = ymd(data$date, tz = "UTC")
 
-  data$date = data$date + hms("12:00:00")
+  data$date = data$date + hms("00:00:00")
   }
   gf = guess_formats(data$deploy_date,  c("mdy", "dmy", "ymd", "mdy_HM", "mdy_HMS","dmy_HMS", "dmy_HM", "ymd_HMS", "ymd_HM"))
   gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
 
-  if(gf == "%m-%d-%Y") data$deploy_date = mdy(data$deploy_date)
-  if(gf == "%d-%m-%Y") data$deploy_date = dmy(data$deploy_date)
-  if(gf == "%Y-%m-%d") data$deploy_date = ymd(data$deploy_date)
-  if(gf == "%d/%m/%Y") data$deploy_date = dmy(data$deploy_date)
-  if(gf == "%m-%d-%Y %H:%M") data$deploy_date = mdy_hm(data$deploy_date)
-  if(gf == "%m/%d/%Y %H:%M") data$deploy_date = mdy_hm(data$deploy_date)
-  if(gf == "%m-%d-%Y %H:%M:%S") data$deploy_date = mdy_hms(data$deploy_date)
-  if(gf == "%d-%m-%Y %H:%M:%S") data$deploy_date = dmy_hms(data$deploy_date)
-  if(gf == "%d-%m-%Y %H:%M") data$deploy_date = dmy_hm(data$deploy_date)
-  if(gf == "%Y-%m-%d %H:%M:%S") data$deploy_date = ymd_hms(data$deploy_date)
-  if(gf == "%Y-%m-%d %H:%M") data$deploy_date = ymd_hm(data$deploy_date)
-  if(gf == "%d/%m/%Y %H:%M") data$deploy_date = dmy_hm(data$deploy_date)
-  if(gf == "%Y-%m-%d %H:%M:%OS") data$deploy_date = ymd_hms(data$deploy_date)
+  if(gf == "%m-%d-%Y") data$deploy_date = mdy(data$deploy_date, tz = "UTC")
+  if(gf == "%d-%m-%Y") data$deploy_date = dmy(data$deploy_date, tz = "UTC")
+  if(gf == "%Y-%m-%d") data$deploy_date = ymd(data$deploy_date, tz = "UTC")
+  if(gf == "%d/%m/%Y") data$deploy_date = dmy(data$deploy_date, tz = "UTC")
+  if(gf == "%m-%d-%Y %H:%M") data$deploy_date = mdy_hm(data$deploy_date, tz = "UTC")
+  if(gf == "%m/%d/%Y %H:%M") data$deploy_date = mdy_hm(data$deploy_date, tz = "UTC")
+  if(gf == "%m-%d-%Y %H:%M:%S") data$deploy_date = mdy_hms(data$deploy_date, tz = "UTC")
+  if(gf == "%d-%m-%Y %H:%M:%S") data$deploy_date = dmy_hms(data$deploy_date, tz = "UTC")
+  if(gf == "%d-%m-%Y %H:%M") data$deploy_date = dmy_hm(data$deploy_date, tz = "UTC")
+  if(gf == "%Y-%m-%d %H:%M:%S") data$deploy_date = ymd_hms(data$deploy_date, tz = "UTC")
+  if(gf == "%Y-%m-%d %H:%M") data$deploy_date = ymd_hm(data$deploy_date, tz = "UTC")
+  if(gf == "%d/%m/%Y %H:%M") data$deploy_date = dmy_hm(data$deploy_date, tz = "UTC")
+  if(gf == "%Y-%m-%d %H:%M:%OS") data$deploy_date = ymd_hms(data$deploy_date, tz = "UTC")
   #handle the case where not haul date provided
   if (!any(as.character(data$recover_date) != "") || all(is.na(data$recover_date))) {
     warning("No recover date provided")
@@ -57,26 +57,27 @@ acoustic_file_handler = function(data, fn){
     gf = guess_formats(data$recover_date, c("mdy", "dmy", "ymd", "mdy_HM", "mdy_HMS","dmy_HMS", "dmy_HM", "ymd_HMS", "ymd_HM"))
     gf = names(sort(table(gf),decreasing=TRUE)[1:3][1])
 
-    if(gf == "%m-%d-%Y") data$recover_date = mdy(data$recover_date)
-    if(gf == "%d-%m-%Y") data$recover_date = dmy(data$recover_date)
-    if(gf == "%Y-%m-%d") data$recover_date = ymd(data$recover_date)
-    if(gf == "%d/%m/%Y") data$recover_date = dmy(data$recover_date)
-    if(gf == "%m-%d-%Y %H:%M") data$recover_date = mdy_hm(data$recover_date)
-    if(gf == "%m/%d/%Y %H:%M") data$recover_date = mdy_hm(data$recover_date)
-    if(gf == "%m-%d-%Y %H:%M:%S") data$recover_date = mdy_hms(data$recover_date)
-    if(gf == "%d-%m-%Y %H:%M:%S") data$recover_date = dmy_hms(data$recover_date)
-    if(gf == "%d-%m-%Y %H:%M") data$recover_date = dmy_hm(data$recover_date)
-    if(gf == "%Y-%m-%d %H:%M:%S") data$recover_date = ymd_hms(data$recover_date)
-    if(gf == "%Y-%m-%d %H:%M") data$recover_date = ymd_hm(data$recover_date)
-    if(gf == "%d/%m/%Y %H:%M") data$recover_date = dmy_hm(data$recover_date)
-    if(gf == "%Y-%m-%d %H:%M:%OS") data$recover_date = ymd_hms(data$recover_date)
+    if(gf == "%m-%d-%Y") data$recover_date = mdy(data$recover_date, tz = "UTC")
+    if(gf == "%d-%m-%Y") data$recover_date = dmy(data$recover_date, tz = "UTC")
+    if(gf == "%Y-%m-%d") data$recover_date = ymd(data$recover_date, tz = "UTC")
+    if(gf == "%d/%m/%Y") data$recover_date = dmy(data$recover_date, tz = "UTC")
+    if(gf == "%m-%d-%Y %H:%M") data$recover_date = mdy_hm(data$recover_date, tz = "UTC")
+    if(gf == "%m/%d/%Y %H:%M") data$recover_date = mdy_hm(data$recover_date, tz = "UTC")
+    if(gf == "%m-%d-%Y %H:%M:%S") data$recover_date = mdy_hms(data$recover_date, tz = "UTC")
+    if(gf == "%d-%m-%Y %H:%M:%S") data$recover_date = dmy_hms(data$recover_date, tz = "UTC")
+    if(gf == "%d-%m-%Y %H:%M") data$recover_date = dmy_hm(data$recover_date, tz = "UTC")
+    if(gf == "%Y-%m-%d %H:%M:%S") data$recover_date = ymd_hms(data$recover_date, tz = "UTC")
+    if(gf == "%Y-%m-%d %H:%M") data$recover_date = ymd_hm(data$recover_date, tz = "UTC")
+    if(gf == "%d/%m/%Y %H:%M") data$recover_date = dmy_hm(data$recover_date, tz = "UTC")
+    if(gf == "%Y-%m-%d %H:%M:%OS") data$recover_date = ymd_hms(data$recover_date, tz = "UTC")
   }
 
   data = data[order(data$date), ]
   mmpid = split(data, data$station_name)
   for (k in 1:length(mmpid)) {
     mm_sub = mmpid[[k]]
-    print(as.character(mm_sub$station_name[1]))
+   # print(as.character(mm_sub$station_name[1]))
+    mm_sub$data = gsub("°C", "", mm_sub$data)
     #In case where deployment date is same as record date
     if(length(unique(mm_sub$deploy_date)) > 50){ #Pick some number of unreasonable deployments
       mm_sub$deploy_date = min(mm_sub$deploy_date)
@@ -99,10 +100,14 @@ acoustic_file_handler = function(data, fn){
       md_sub = md_sub[!duplicated(paste(as.character(md_sub$date), md_sub$receiver, sep = "-")), ]
 
       if (length(ind) == 0) {
-        print("No 'Temperatrue', 'internal_deg_c', 'ambient_mean_deg_c' or 'Average temperature' feilds")
+       # print("No 'Temperatrue', 'internal_deg_c', 'ambient_mean_deg_c' or 'Average temperature' feilds")
         next()
       }
 
+      if (nrow(md_sub) == 0) {
+        #print("No Rows!")
+        next()
+      }
       muid = paste(as.character(md_sub$station_name[1]),
                    as.character(length(which(
                      grepl(as.character(md_sub$station_name[1]), pkg.env$T_UID)
@@ -122,6 +127,8 @@ acoustic_file_handler = function(data, fn){
         loc = "South of Halifax"
         pro = "OTN Halifax"
       }
+
+
       if (grepl("hfx", as.character(md_sub$project[1]))) {
         loc = "South of Halifax"
         pro = "OTN Halifax"
@@ -138,10 +145,11 @@ acoustic_file_handler = function(data, fn){
         loc = "SABMPA"
         pro = "V2LSCF"
       }
-
-      if(as.character(mm_sub$station_name[1]) == "N117"){
-        print(md_sub)
+      if (grepl("v2lscf", as.character(md_sub$project[1]))) {
+        loc = "SABMPA"
+        pro = "V2LSCF"
       }
+
 
       span = interval(md_sub$date[1], md_sub$date[2])
 
@@ -220,7 +228,6 @@ acoustic_file_handler = function(data, fn){
 
       muiddx = rep(muid, nrow(md_sub))
 
-
       basedat = data.frame(
         muiddx,
         md_sub$date,
@@ -239,13 +246,13 @@ acoustic_file_handler = function(data, fn){
       }
       else{
 
-        print("Not Enough DATA")
+       # print("Not Enough DATA")
         next()
       }
 
       if (nrow(basedat) < 1) {
 
-        print("Not Enough DATA")
+      #  print("Not Enough DATA")
         next()
 
       }
@@ -314,8 +321,10 @@ acoustic_file_handler = function(data, fn){
         assign('T_UID', c(pkg.env$T_UID, alluid), pkg.env)
         ROracle::dbDisconnect(con5)
       }
+
+      basedat = basedat[order(basedat$T_DATE),]
       basedat$T_DATE = as.POSIXct(basedat$T_DATE)
-      p = ggplot(data = basedat, main = muid, aes(x = T_DATE, y = TEMP)) + geom_line() + ggtitle(muid) + xlab("Date") + ylab("Temp °C")
+      p = ggplot(data = basedat, main = muid, aes(x = T_DATE, y = TEMP)) + geom_point() + ggtitle(muid) + xlab("Date") + ylab("Temp °C")
       p = p + scale_x_datetime(labels = date_format("%Y-%m-%d"),
                                breaks = date_breaks("months")) + theme(axis.text.x = element_text(angle = 45))
       if (!dir.exists(file.path(dirname(fn), "ReceiverPlots")))
